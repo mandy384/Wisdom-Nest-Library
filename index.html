@@ -5,21 +5,18 @@
 <title>Wisdom Nest</title>
 
 <style>
-body {
-  font-family: Arial;
-  text-align: center;
-}
+body { font-family: Arial; text-align: center; }
 
 /* FORM */
 .form-box {
   border: 1px solid #ccc;
   padding: 15px;
   margin: 20px auto;
-  width: 300px;
+  width: 320px;
 }
 
 input, select, button {
-  width: 90%;
+  width: 95%;
   padding: 8px;
   margin: 5px;
 }
@@ -34,13 +31,14 @@ input, select, button {
 
 .seat {
   border: 1px solid black;
-  padding: 15px;
+  padding: 10px;
+  font-size: 12px;
   cursor: pointer;
   background: #e0e0e0;
 }
 
 .selected { background: green; color: white; }
-.booked { background: red; color: white; cursor: not-allowed; }
+.booked { background: red; color: white; }
 .empty { visibility: hidden; }
 
 </style>
@@ -50,7 +48,6 @@ input, select, button {
 
 <h2>Wisdom Nest</h2>
 
-<!-- FORM -->
 <div class="form-box">
   <input type="text" id="name" placeholder="Name">
   <input type="text" id="father" placeholder="Father Name">
@@ -67,50 +64,49 @@ input, select, button {
   <button onclick="saveData()">Save</button>
   <button onclick="editData()">Edit</button>
   <button onclick="resetForm()">Reset</button>
+
+  <hr>
+
+  <input type="text" id="searchMobile" placeholder="Search by Mobile">
+  <button onclick="searchData()">Search</button>
+
+  <button onclick="printReceipt()">Print Receipt</button>
 </div>
 
 <!-- SEATS -->
-<div class="container">
+<div class="container" id="seats">
 
-<!-- Row 1 -->
+<!-- SAME LAYOUT -->
 <div class="seat">8</div><div class="seat">7</div><div class="seat">6</div><div class="seat">5</div><div class="seat">4</div><div class="seat">3</div><div class="seat">2</div><div class="seat">1</div>
 
-<!-- Row 2 -->
 <div class="seat">9</div><div class="seat">10</div><div class="seat">11</div><div class="seat">12</div>
 <div class="empty"></div>
 <div class="seat">13</div><div class="seat">14</div><div class="seat">15</div>
 
-<!-- Row 3 -->
 <div class="seat">22</div><div class="seat">21</div><div class="seat">20</div><div class="seat">19</div>
 <div class="empty"></div>
 <div class="seat">18</div><div class="seat">17</div><div class="seat">16</div>
 
-<!-- Row 4 -->
 <div class="seat">23</div><div class="seat">24</div><div class="seat">25</div>
 <div class="empty"></div><div class="empty"></div>
 <div class="seat">26</div><div class="seat">27</div><div class="seat">28</div>
 
-<!-- Row 5 -->
 <div class="seat">35</div><div class="seat">34</div><div class="seat">33</div><div class="seat">32</div>
 <div class="empty"></div>
 <div class="seat">31</div><div class="seat">30</div><div class="seat">29</div>
 
-<!-- Row 6 -->
 <div class="seat">36</div><div class="seat">37</div><div class="seat">38</div><div class="seat">39</div>
 <div class="empty"></div>
 <div class="seat">40</div><div class="seat">41</div><div class="seat">42</div>
 
-<!-- Row 7 -->
 <div class="seat">48</div><div class="seat">47</div><div class="seat">46</div>
 <div class="empty"></div><div class="empty"></div>
 <div class="seat">45</div><div class="seat">44</div><div class="seat">43</div>
 
-<!-- Row 8 -->
 <div class="seat">49</div><div class="seat">50</div><div class="seat">51</div>
 <div class="empty"></div><div class="empty"></div>
 <div class="seat">52</div><div class="seat">53</div><div class="seat">54</div>
 
-<!-- Row 9 -->
 <div class="seat">60</div><div class="seat">59</div><div class="seat">58</div><div class="seat">57</div>
 <div class="empty"></div><div class="empty"></div>
 <div class="seat">56</div><div class="seat">55</div>
@@ -119,6 +115,7 @@ input, select, button {
 
 <script>
 let selectedSeat = null;
+let currentData = null;
 const seats = document.querySelectorAll('.seat');
 
 // SELECT
@@ -134,7 +131,7 @@ seats.forEach(seat => {
 
 // SAVE
 function saveData() {
-  if (!selectedSeat) return alert("Select seat first!");
+  if (!selectedSeat) return alert("Select seat!");
 
   let data = {
     name: name.value,
@@ -150,15 +147,17 @@ function saveData() {
   seats.forEach(s => {
     if (s.innerText == selectedSeat) {
       s.classList.add('booked');
+      s.innerHTML = selectedSeat + "<br>" + data.name;
     }
   });
 
-  alert("Saved Successfully");
+  currentData = data;
+  alert("Saved");
 }
 
 // EDIT
 function editData() {
-  if (!selectedSeat) return alert("Select seat first!");
+  if (!selectedSeat) return alert("Select seat!");
 
   let data = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
   if (!data) return alert("No data!");
@@ -168,6 +167,34 @@ function editData() {
   mobile.value = data.mobile;
   aadhar.value = data.aadhar;
   payment.value = data.payment;
+
+  currentData = data;
+}
+
+// SEARCH
+function searchData() {
+  let mobileVal = document.getElementById("searchMobile").value;
+
+  for (let i = 1; i <= 60; i++) {
+    let d = JSON.parse(localStorage.getItem("seat_" + i));
+    if (d && d.mobile == mobileVal) {
+      alert("Seat: " + d.seat + " | Name: " + d.name);
+      return;
+    }
+  }
+  alert("Not found");
+}
+
+// PRINT
+function printReceipt() {
+  if (!currentData) return alert("No data to print!");
+
+  let win = window.open("", "", "width=400,height=400");
+  win.document.write("<h3>Wisdom Nest Receipt</h3>");
+  for (let key in currentData) {
+    win.document.write(key + ": " + currentData[key] + "<br>");
+  }
+  win.print();
 }
 
 // RESET
@@ -179,8 +206,11 @@ function resetForm() {
 // LOAD
 window.onload = () => {
   seats.forEach(s => {
-    let d = localStorage.getItem("seat_" + s.innerText);
-    if (d) s.classList.add("booked");
+    let d = JSON.parse(localStorage.getItem("seat_" + s.innerText));
+    if (d) {
+      s.classList.add("booked");
+      s.innerHTML = s.innerText + "<br>" + d.name;
+    }
   });
 };
 </script>
