@@ -10,7 +10,7 @@ body { font-family: Arial; text-align: center; }
 .form-box {
   border: 1px solid #ccc;
   padding: 15px;
-  width: 320px;
+  width: 340px;
   margin: 20px auto;
 }
 
@@ -41,7 +41,7 @@ input, select, button {
 #details {
   border: 2px solid black;
   padding: 10px;
-  width: 320px;
+  width: 340px;
   margin: 10px auto;
   text-align: left;
 }
@@ -55,11 +55,11 @@ input, select, button {
 <div class="form-box">
 <input id="name" placeholder="Name">
 <input id="father" placeholder="Father Name">
-<input id="mobile" placeholder="Mobile Number">
-<input id="aadhar" placeholder="Aadhar Number">
+<input id="mobile" placeholder="Mobile">
+<input id="aadhar" placeholder="Aadhar">
 
-<input id="paid" type="number" placeholder="Paid Amount">
-<input id="total" type="number" placeholder="Total Amount">
+<input id="paid" type="number" placeholder="Paid">
+<input id="total" type="number" placeholder="Total">
 
 <input id="start" type="date">
 <input id="end" type="date">
@@ -72,7 +72,7 @@ input, select, button {
 </select>
 
 <button onclick="saveData()">Save / Update</button>
-<button onclick="resetForm()">Reset</button>
+<button onclick="resetForm()">Reset Form</button>
 </div>
 
 <div id="details">👉 Click any seat</div>
@@ -112,7 +112,7 @@ layout.forEach(row=>{
   });
 });
 
-// select seat
+// select
 function selectSeat(div,num){
   selectedSeat=num;
 
@@ -138,30 +138,30 @@ function selectSeat(div,num){
   showDetails();
 }
 
-// save
+// SAVE + EDIT SAME BUTTON
 function saveData(){
   if(!selectedSeat) return alert("Seat select karo");
   if(!name.value.trim()) return alert("Name required");
 
   let data={
     name:name.value.trim(),
-    father:father.value,
-    mobile:mobile.value,
-    aadhar:aadhar.value,
+    father:father.value||"",
+    mobile:mobile.value||"",
+    aadhar:aadhar.value||"",
     paid:Number(paid.value||0),
     total:Number(total.value||0),
-    start:start.value,
-    end:end.value,
-    payment:payment.value
+    start:start.value||"",
+    end:end.value||"",
+    payment:payment.value||""
   };
 
-  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
+  localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
 
   loadSeats();
   showDetails();
 }
 
-// show details
+// SHOW DETAIL
 function showDetails(){
   let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
 
@@ -182,18 +182,24 @@ function showDetails(){
   <b>Payment Mode:</b> ${d.payment}<br>
   <b>Date:</b> ${d.start} → ${d.end}<br><br>
 
+  <button onclick="editData()">Edit</button>
   <button onclick="deleteData()">Reset</button>
   `;
 }
 
-// delete
+// EDIT (auto fill already done)
+function editData(){
+  alert("Edit in form and click Save");
+}
+
+// DELETE
 function deleteData(){
   localStorage.removeItem("seat_"+selectedSeat);
   loadSeats();
   details.innerHTML="Deleted";
 }
 
-// load seats
+// LOAD SEATS
 function loadSeats(){
   document.querySelectorAll('.seat').forEach(s=>{
     let num=s.dataset.seat;
@@ -214,12 +220,13 @@ function loadSeats(){
   });
 }
 
-// reset form
+// RESET FORM
 function resetForm(){
   document.querySelectorAll("input").forEach(i=>i.value="");
+  payment.value="";
 }
 
-// load
+// LOAD
 window.onload=loadSeats;
 </script>
 
