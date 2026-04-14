@@ -7,6 +7,19 @@
 <style>
 body { font-family: Arial; text-align: center; }
 
+.form-box {
+  border: 1px solid #ccc;
+  padding: 15px;
+  width: 320px;
+  margin: 20px auto;
+}
+
+input, button {
+  width: 95%;
+  padding: 8px;
+  margin: 5px;
+}
+
 .container {
   display: grid;
   grid-template-columns: repeat(8, 70px);
@@ -16,15 +29,21 @@ body { font-family: Arial; text-align: center; }
 
 .seat {
   border: 1px solid black;
-  padding: 5px;
+  height: 55px;
   font-size: 11px;
   cursor: pointer;
   background: lightgreen;
-  height: 55px;
 }
 
-.empty { visibility: hidden; }
 .active { border: 3px solid blue; }
+.empty { visibility: hidden; }
+
+#details {
+  border: 2px solid black;
+  padding: 10px;
+  width: 300px;
+  margin: 10px auto;
+}
 </style>
 </head>
 
@@ -32,16 +51,27 @@ body { font-family: Arial; text-align: center; }
 
 <h2>Wisdom Nest</h2>
 
-<input id="name" placeholder="Enter Name">
-<button onclick="saveData()">Save</button>
+<div class="form-box">
+<input id="name" placeholder="Name">
+<input id="mobile" placeholder="Mobile">
+<input id="paid" type="number" placeholder="Paid">
+<input id="total" type="number" placeholder="Total">
+<input id="start" type="date">
+<input id="end" type="date">
+
+<button onclick="saveData()">Save / Update</button>
+<button onclick="resetForm()">Reset</button>
+</div>
+
+<div id="details">👉 Click seat</div>
 
 <div class="container" id="seatBox"></div>
 
 <script>
-let selectedSeat = null;
-const box = document.getElementById("seatBox");
+let selectedSeat=null;
+const box=document.getElementById("seatBox");
 
-const layout = [
+const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
 [22,21,20,19,0,18,17,16],
@@ -53,80 +83,121 @@ const layout = [
 [60,59,58,57,0,0,56,55]
 ];
 
-// 🔥 CREATE SEATS (FIXED CLICK)
-layout.forEach(row => {
-  row.forEach(n => {
-    let div = document.createElement("div");
+// create seats
+layout.forEach(row=>{
+  row.forEach(n=>{
+    let div=document.createElement("div");
 
-    if (n === 0) {
-      div.className = "empty";
-    } else {
-      div.className = "seat";
-      div.innerText = n;
-      div.dataset.seat = n;
-
-      div.addEventListener("click", function() {
-        selectedSeat = this.dataset.seat;
-
-        document.querySelectorAll('.seat').forEach(s => s.classList.remove("active"));
-        this.classList.add("active");
-
-        let d = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
-        name.value = d && d.name ? d.name : "";
-      });
+    if(n===0){
+      div.className="empty";
+    }else{
+      div.className="seat";
+      div.dataset.seat=n;
+      div.onclick=()=>selectSeat(div,n);
     }
 
     box.appendChild(div);
   });
 });
 
-// 🔥 SAVE FIX
-function saveData() {
-  if (!selectedSeat) {
-    alert("पहले seat select करो");
-    return;
+// select
+function selectSeat(div,num){
+  selectedSeat=num;
+
+  document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
+  div.classList.add("active");
+
+  let d=JSON.parse(localStorage.getItem("seat_"+num));
+
+  if(d){
+    name.value=d.name||"";
+    mobile.value=d.mobile||"";
+    paid.value=d.paid||"";
+    total.value=d.total||"";
+    start.value=d.start||"";
+    end.value=d.end||"";
+  }else{
+    resetForm();
   }
 
-  let userName = name.value.trim();
-
-  if (!userName) {
-    alert("Name डालो");
-    return;
-  }
-
-  let data = {
-    name: userName
-  };
-
-  localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
-
-  loadSeats();
-  alert("Saved");
+  showDetails();
 }
 
-// 🔥 LOAD SEATS (NAME SHOW FIX)
-function loadSeats() {
-  document.querySelectorAll('.seat').forEach(s => {
-    let num = s.dataset.seat;
-    let d = JSON.parse(localStorage.getItem("seat_" + num));
+// 🔥 SAVE FIXED
+function saveData(){
+  if(!selectedSeat) return alert("Seat select karo");
+  if(!name.value.trim()) return alert("Name enter karo");
 
-    if (d && d.name) {
-      s.innerHTML = `
+  let data={
+    name:name.value.trim(),
+    mobile:mobile.value||"",
+    paid:Number(paid.value||0),
+    total:Number(total.value||0),
+    start:start.value||"",
+    end:end.value||""
+  };
+
+  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
+
+  loadSeats();
+  showDetails();
+}
+
+// details
+function showDetails(){
+  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
+
+  if(!d){
+    details.innerHTML="<b>Seat "+selectedSeat+"</b><br>Empty";
+    return;
+  }
+
+  let due=d.total-d.paid;
+
+  details.innerHTML=`
+  <b>Seat:</b> ${selectedSeat}<br>
+  <b>Name:</b> ${d.name}<br>
+  <b>Mobile:</b> ${d.mobile}<br>
+  <b>Paid:</b> ${d.paid} | Due: ${due}<br>
+  <b>Date:</b> ${d.start} → ${d.end}<br>
+  <button onclick="deleteData()">Reset</button>
+  `;
+}
+
+// delete
+function deleteData(){
+  localStorage.removeItem("seat_"+selectedSeat);
+  loadSeats();
+  details.innerHTML="Deleted";
+}
+
+// load seats
+function loadSeats(){
+  document.querySelectorAll('.seat').forEach(s=>{
+    let num=s.dataset.seat;
+    let d=JSON.parse(localStorage.getItem("seat_"+num));
+
+    if(d && d.name){
+      s.innerHTML=`
         <div>${num}</div>
         <div style="font-size:10px;">${d.name}</div>
       `;
-      s.style.background = "red";
-      s.style.color = "white";
-    } else {
-      s.innerHTML = num;
-      s.style.background = "lightgreen";
-      s.style.color = "black";
+      s.style.background="red";
+      s.style.color="white";
+    }else{
+      s.innerHTML=num;
+      s.style.background="lightgreen";
+      s.style.color="black";
     }
   });
 }
 
-// LOAD
-window.onload = loadSeats;
+function resetForm(){
+  document.querySelectorAll("input").forEach(i=>i.value="");
+}
+
+// load
+window.onload=loadSeats;
 </script>
 
 </body>
