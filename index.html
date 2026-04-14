@@ -29,20 +29,21 @@ input, select, button {
 
 .seat {
   border: 1px solid black;
-  padding: 8px;
+  padding: 5px;
+  font-size: 11px;
   cursor: pointer;
   background: lightgreen;
-  font-size: 12px;
+  height: 55px;
 }
 
 .empty { visibility: hidden; }
 .active { border: 3px solid blue; }
 
-/* legend */
-.legend span {
-  padding:5px 10px;
-  margin:5px;
-  display:inline-block;
+#details {
+  border: 2px solid black;
+  padding: 10px;
+  width: 300px;
+  margin: 10px auto;
 }
 </style>
 </head>
@@ -50,13 +51,6 @@ input, select, button {
 <body>
 
 <h2>Wisdom Nest</h2>
-
-<div class="legend">
-  <span style="background:lightgreen;">Empty</span>
-  <span style="background:red;color:white;">Full Paid</span>
-  <span style="background:orange;">Due</span>
-  <span style="background:skyblue;">Expired</span>
-</div>
 
 <div class="form-box">
 <input id="name" placeholder="Name">
@@ -76,7 +70,6 @@ input, select, button {
 <option>Dew</option>
 </select>
 
-<!-- 🔥 COLOR SELECT -->
 <select id="color">
 <option value="">Auto Color</option>
 <option value="lightgreen">Green</option>
@@ -94,10 +87,10 @@ input, select, button {
 <div class="container" id="seatBox"></div>
 
 <script>
-let selectedSeat = null;
-const container = document.getElementById("seatBox");
+let selectedSeat=null;
+const box=document.getElementById("seatBox");
 
-const layout = [
+const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
 [22,21,20,19,0,18,17,16],
@@ -111,25 +104,19 @@ const layout = [
 
 // create seats
 layout.forEach(row=>{
-  row.forEach(num=>{
-    let div=document.createElement("div");
+  row.forEach(n=>{
+    let d=document.createElement("div");
 
-    if(num===0){
-      div.className="empty";
+    if(n===0){
+      d.className="empty";
     }else{
-      div.className="seat";
-      div.dataset.seat=num;
+      d.className="seat";
+      d.dataset.seat=n;
 
-      div.onclick=()=>selectSeat(div,num);
-
-      // 🔥 RIGHT CLICK COLOR CHANGE
-      div.oncontextmenu=(e)=>{
-        e.preventDefault();
-        changeColor(div,num);
-      };
+      d.onclick=()=>selectSeat(d,n);
     }
 
-    container.appendChild(div);
+    box.appendChild(d);
   });
 });
 
@@ -161,10 +148,11 @@ function selectSeat(div,num){
 
 // save
 function saveData(){
-  if(!selectedSeat) return alert("Select seat");
+  if(!selectedSeat) return alert("Select seat first");
+  if(!name.value) return alert("Enter name");
 
   let data={
-    name:name.value,
+    name:name.value.trim(),
     father:father.value,
     mobile:mobile.value,
     paid:Number(paid.value||0),
@@ -176,11 +164,12 @@ function saveData(){
   };
 
   localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
+
   loadSeats();
   showDetails();
 }
 
-// details
+// show details
 function showDetails(){
   let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
 
@@ -208,20 +197,7 @@ function deleteData(){
   details.innerHTML="Deleted";
 }
 
-// 🔥 RIGHT CLICK COLOR CHANGE
-function changeColor(div,num){
-  let color=prompt("Enter color (red, green, orange, skyblue):");
-
-  if(!color) return;
-
-  let d=JSON.parse(localStorage.getItem("seat_"+num))||{};
-  d.color=color;
-
-  localStorage.setItem("seat_"+num,JSON.stringify(d));
-  loadSeats();
-}
-
-// load seats
+// load seats (🔥 NAME FIXED HERE)
 function loadSeats(){
   let today=new Date().toISOString().split('T')[0];
 
@@ -229,15 +205,11 @@ function loadSeats(){
     let num=s.dataset.seat;
     let d=JSON.parse(localStorage.getItem("seat_"+num));
 
-    s.style.background="";
-    s.style.color="black";
-
     if(d){
 
-      // manual color first
+      // color
       if(d.color){
         s.style.background=d.color;
-        s.style.color="white";
       }else{
         let due=d.total-d.paid;
 
@@ -251,10 +223,16 @@ function loadSeats(){
         }
       }
 
-      s.innerHTML=num+"<br><small>"+(d.name||"")+"</small>";
+      // 🔥 NAME ALWAYS SHOW
+      s.innerHTML = `
+        <div>${num}</div>
+        <div style="font-size:10px;">${d.name}</div>
+      `;
+
     }else{
       s.innerHTML=num;
       s.style.background="lightgreen";
+      s.style.color="black";
     }
   });
 }
