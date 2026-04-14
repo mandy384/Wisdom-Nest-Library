@@ -7,19 +7,6 @@
 <style>
 body { font-family: Arial; text-align: center; }
 
-.form-box {
-  border: 1px solid #ccc;
-  padding: 15px;
-  width: 340px;
-  margin: 20px auto;
-}
-
-input, select, button {
-  width: 95%;
-  padding: 8px;
-  margin: 5px;
-}
-
 .container {
   display: grid;
   grid-template-columns: repeat(8, 70px);
@@ -38,12 +25,17 @@ input, select, button {
 .active { border: 3px solid blue; }
 .empty { visibility: hidden; }
 
-#details {
-  border: 2px solid black;
+.form-box {
+  border: 1px solid #ccc;
   padding: 10px;
-  width: 340px;
-  margin: 10px auto;
-  text-align: left;
+  width: 300px;
+  margin: 20px auto;
+}
+
+input, button {
+  width: 95%;
+  padding: 6px;
+  margin: 4px;
 }
 </style>
 </head>
@@ -54,45 +46,26 @@ input, select, button {
 
 <div class="form-box">
 <input id="name" placeholder="Name">
-<input id="father" placeholder="Father Name">
 <input id="mobile" placeholder="Mobile">
-<input id="aadhar" placeholder="Aadhar">
-
-<input id="paid" type="number" placeholder="Paid">
-<input id="total" type="number" placeholder="Total">
-
-<input id="start" type="date">
-<input id="end" type="date">
-
-<select id="payment">
-<option value="">Payment Mode</option>
-<option>Online</option>
-<option>Cash</option>
-<option>Due</option>
-</select>
-
-<button onclick="saveData()">Save / Update</button>
-<button onclick="resetForm()">Reset Form</button>
+<button onclick="saveData()">Save</button>
 </div>
-
-<div id="details">👉 Click any seat</div>
 
 <div class="container" id="seatBox"></div>
 
 <script>
-let selectedSeat=null;
-const box=document.getElementById("seatBox");
+let selectedSeat = null;
+const box = document.getElementById("seatBox");
 
-const layout=[
-[8,7,6,5,4,3,2,1],
+const layout = [
+[1,2,3,4,5,6,7,8],
 [9,10,11,12,0,13,14,15],
-[22,21,20,19,0,18,17,16],
+[16,17,18,19,0,20,21,22],
 [23,24,25,0,0,26,27,28],
-[35,34,33,32,0,31,30,29],
+[29,30,31,32,0,33,34,35],
 [36,37,38,39,0,40,41,42],
-[48,47,46,0,0,45,44,43],
+[43,44,45,0,0,46,47,48],
 [49,50,51,0,0,52,53,54],
-[60,59,58,57,0,0,56,55]
+[55,56,57,58,0,0,59,60]
 ];
 
 // create seats
@@ -104,112 +77,58 @@ layout.forEach(row=>{
       div.className="empty";
     }else{
       div.className="seat";
-      div.dataset.seat=n;
-      div.onclick=()=>selectSeat(div,n);
+      div.innerText=n;
+
+      // 🔥 FIX CLICK
+      div.onclick=function(){
+        selectedSeat=n;
+
+        document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
+        div.classList.add("active");
+
+        let d=JSON.parse(localStorage.getItem("seat_"+n));
+        name.value = d ? d.name : "";
+        mobile.value = d ? d.mobile : "";
+      };
     }
 
     box.appendChild(div);
   });
 });
 
-// select
-function selectSeat(div,num){
-  selectedSeat=num;
-
-  document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
-  div.classList.add("active");
-
-  let d=JSON.parse(localStorage.getItem("seat_"+num));
-
-  if(d){
-    name.value=d.name||"";
-    father.value=d.father||"";
-    mobile.value=d.mobile||"";
-    aadhar.value=d.aadhar||"";
-    paid.value=d.paid||"";
-    total.value=d.total||"";
-    start.value=d.start||"";
-    end.value=d.end||"";
-    payment.value=d.payment||"";
-  }else{
-    resetForm();
-  }
-
-  showDetails();
-}
-
-// SAVE + EDIT SAME BUTTON
+// 🔥 SAVE FIX
 function saveData(){
-  if(!selectedSeat) return alert("Seat select karo");
-  if(!name.value.trim()) return alert("Name required");
-
-  let data={
-    name:name.value.trim(),
-    father:father.value||"",
-    mobile:mobile.value||"",
-    aadhar:aadhar.value||"",
-    paid:Number(paid.value||0),
-    total:Number(total.value||0),
-    start:start.value||"",
-    end:end.value||"",
-    payment:payment.value||""
-  };
-
-  localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
-
-  loadSeats();
-  showDetails();
-}
-
-// SHOW DETAIL
-function showDetails(){
-  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
-
-  if(!d){
-    details.innerHTML="<b>Seat "+selectedSeat+"</b><br>Empty";
+  if(selectedSeat===null){
+    alert("Seat select karo");
     return;
   }
 
-  let due=d.total-d.paid;
+  let userName=name.value.trim();
 
-  details.innerHTML=`
-  <b>Seat:</b> ${selectedSeat}<br>
-  <b>Name:</b> ${d.name}<br>
-  <b>Father:</b> ${d.father}<br>
-  <b>Mobile:</b> ${d.mobile}<br>
-  <b>Aadhar:</b> ${d.aadhar}<br>
-  <b>Paid:</b> ₹${d.paid} | <b>Due:</b> ₹${due}<br>
-  <b>Payment Mode:</b> ${d.payment}<br>
-  <b>Date:</b> ${d.start} → ${d.end}<br><br>
+  if(userName===""){
+    alert("Name daalo");
+    return;
+  }
 
-  <button onclick="editData()">Edit</button>
-  <button onclick="deleteData()">Reset</button>
-  `;
-}
+  let data={
+    name:userName,
+    mobile:mobile.value || ""
+  };
 
-// EDIT (auto fill already done)
-function editData(){
-  alert("Edit in form and click Save");
-}
+  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
 
-// DELETE
-function deleteData(){
-  localStorage.removeItem("seat_"+selectedSeat);
   loadSeats();
-  details.innerHTML="Deleted";
+  alert("Saved successfully");
 }
 
-// LOAD SEATS
+// 🔥 LOAD
 function loadSeats(){
   document.querySelectorAll('.seat').forEach(s=>{
-    let num=s.dataset.seat;
+    let num=s.innerText.split("\n")[0];
     let d=JSON.parse(localStorage.getItem("seat_"+num));
 
     if(d && d.name){
-      s.innerHTML=`
-        <div>${num}</div>
-        <div style="font-size:10px;">${d.name}</div>
-      `;
+      s.innerHTML=num+"<br>"+d.name;
       s.style.background="red";
       s.style.color="white";
     }else{
@@ -220,13 +139,6 @@ function loadSeats(){
   });
 }
 
-// RESET FORM
-function resetForm(){
-  document.querySelectorAll("input").forEach(i=>i.value="");
-  payment.value="";
-}
-
-// LOAD
 window.onload=loadSeats;
 </script>
 
