@@ -7,22 +7,9 @@
 <style>
 body { font-family: Arial; text-align: center; }
 
-.form-box {
-  border: 1px solid #ccc;
-  padding: 15px;
-  width: 350px;
-  margin: 20px auto;
-}
-
-input, select, button {
-  width: 95%;
-  padding: 8px;
-  margin: 5px;
-}
-
 .container {
   display: grid;
-  grid-template-columns: repeat(8, 70px);
+  grid-template-columns: repeat(8, 65px);
   gap: 10px;
   justify-content: center;
 }
@@ -33,15 +20,29 @@ input, select, button {
   font-size: 11px;
   cursor: pointer;
   background: lightgreen;
+  padding: 3px;
 }
 
-.active { border: 3px solid blue; }
 .empty { visibility: hidden; }
+.active { border: 3px solid blue; }
+
+.form-box {
+  border: 1px solid #ccc;
+  padding: 15px;
+  width: 330px;
+  margin: 20px auto;
+}
+
+input, select, button {
+  width: 95%;
+  padding: 6px;
+  margin: 4px;
+}
 
 #details {
   border: 2px solid black;
   padding: 10px;
-  width: 350px;
+  width: 330px;
   margin: 10px auto;
   text-align: left;
 }
@@ -75,14 +76,15 @@ input, select, button {
 <button onclick="resetForm()">Reset Form</button>
 </div>
 
-<div id="details">👉 Click any seat</div>
+<div id="details">👉 Click seat</div>
 
 <div class="container" id="seatBox"></div>
 
 <script>
-let selectedSeat=null;
-const box=document.getElementById("seatBox");
+let selectedSeat = null;
+const box = document.getElementById("seatBox");
 
+// SAME FORMAT
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -97,15 +99,15 @@ const layout=[
 
 // create seats
 layout.forEach(row=>{
-  row.forEach(n=>{
+  row.forEach(num=>{
     let div=document.createElement("div");
 
-    if(n===0){
+    if(num===0){
       div.className="empty";
     }else{
       div.className="seat";
-      div.dataset.seat=n;
-      div.onclick=()=>selectSeat(div,n);
+      div.dataset.seat=num;
+      div.onclick=function(){ selectSeat(this, num); };
     }
 
     box.appendChild(div);
@@ -114,12 +116,12 @@ layout.forEach(row=>{
 
 // select seat
 function selectSeat(div,num){
-  selectedSeat=num;
+  selectedSeat = num;
 
   document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
   div.classList.add("active");
 
-  let d=JSON.parse(localStorage.getItem("seat_"+num));
+  let d = JSON.parse(localStorage.getItem("seat_"+num));
 
   if(d){
     name.value=d.name||"";
@@ -138,10 +140,17 @@ function selectSeat(div,num){
   showDetails();
 }
 
-// SAVE / UPDATE
+// SAVE (🔥 FIXED)
 function saveData(){
-  if(!selectedSeat) return alert("Seat select karo");
-  if(!name.value.trim()) return alert("Name required");
+  if(selectedSeat===null){
+    alert("Seat select karo");
+    return;
+  }
+
+  if(!name.value.trim()){
+    alert("Name required");
+    return;
+  }
 
   let data={
     name:name.value.trim(),
@@ -159,18 +168,21 @@ function saveData(){
 
   loadSeats();
   showDetails();
+  alert("✅ Saved");
 }
 
 // show details
 function showDetails(){
-  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
+  if(selectedSeat===null) return;
+
+  let d = JSON.parse(localStorage.getItem("seat_"+selectedSeat));
 
   if(!d){
     details.innerHTML="<b>Seat "+selectedSeat+"</b><br>Empty";
     return;
   }
 
-  let due=d.total-d.paid;
+  let due = d.total - d.paid;
 
   details.innerHTML=`
   <b>Seat:</b> ${selectedSeat}<br>
@@ -178,18 +190,12 @@ function showDetails(){
   <b>Father:</b> ${d.father}<br>
   <b>Mobile:</b> ${d.mobile}<br>
   <b>Aadhar:</b> ${d.aadhar}<br>
-  <b>Paid:</b> ₹${d.paid} | <b>Due:</b> ₹${due}<br>
-  <b>Payment Mode:</b> ${d.payment}<br>
+  <b>Paid:</b> ₹${d.paid} | Due: ₹${due}<br>
+  <b>Payment:</b> ${d.payment}<br>
   <b>Date:</b> ${d.start} → ${d.end}<br><br>
 
-  <button onclick="editData()">Edit</button>
   <button onclick="deleteData()">Reset</button>
   `;
-}
-
-// edit
-function editData(){
-  alert("Form me change karke Save karo");
 }
 
 // delete
