@@ -34,11 +34,13 @@ input, select, button {
   padding: 10px;
   font-size: 12px;
   cursor: pointer;
-  background: #e0e0e0;
+  background: lightgreen;
 }
 
-.selected { background: green; color: white; }
 .booked { background: red; color: white; }
+.due { background: orange; }
+.expired { background: skyblue; }
+
 .empty { visibility: hidden; }
 
 </style>
@@ -54,6 +56,12 @@ input, select, button {
   <input type="text" id="mobile" placeholder="Mobile Number">
   <input type="text" id="aadhar" placeholder="Aadhar Number">
 
+  <input type="number" id="paid" placeholder="Paid Amount">
+  <input type="number" id="total" placeholder="Total Amount">
+
+  <input type="date" id="start">
+  <input type="date" id="end">
+
   <select id="payment">
     <option value="">Payment Mode</option>
     <option>Online</option>
@@ -62,16 +70,10 @@ input, select, button {
   </select>
 
   <button onclick="saveData()">Save</button>
-  <button onclick="editData()">Edit</button>
   <button onclick="resetForm()">Reset</button>
-
-  <hr>
-
-  <input type="text" id="searchMobile" placeholder="Search by Mobile">
-  <button onclick="searchData()">Search</button>
-
-  <button onclick="printReceipt()">Print Receipt</button>
 </div>
+
+<div id="details"></div>
 
 <!-- SEATS -->
 <div class="container" id="seats">
@@ -115,104 +117,109 @@ input, select, button {
 
 <script>
 let selectedSeat = null;
-let currentData = null;
 const seats = document.querySelectorAll('.seat');
 
-// SELECT
+// CLICK SEAT
 seats.forEach(seat => {
   seat.onclick = () => {
-    if (seat.classList.contains('booked')) return;
-
-    seats.forEach(s => s.classList.remove('selected'));
-    seat.classList.add('selected');
     selectedSeat = seat.innerText;
+    showDetails(selectedSeat);
   };
 });
 
 // SAVE
 function saveData() {
-  if (!selectedSeat) return alert("Select seat!");
+  if (!selectedSeat) return alert("Select seat");
 
   let data = {
     name: name.value,
     father: father.value,
     mobile: mobile.value,
     aadhar: aadhar.value,
-    payment: payment.value,
-    seat: selectedSeat
+    paid: paid.value,
+    total: total.value,
+    start: start.value,
+    end: end.value,
+    payment: payment.value
   };
 
   localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
-
-  seats.forEach(s => {
-    if (s.innerText == selectedSeat) {
-      s.classList.add('booked');
-      s.innerHTML = selectedSeat + "<br>" + data.name;
-    }
-  });
-
-  currentData = data;
+  loadSeats();
   alert("Saved");
 }
 
+// SHOW DETAILS
+function showDetails(seatNo) {
+  let d = JSON.parse(localStorage.getItem("seat_" + seatNo));
+  if (!d) return document.getElementById("details").innerHTML = "Empty Seat";
+
+  let due = d.total - d.paid;
+
+  document.getElementById("details").innerHTML = `
+    <h3>Seat ${seatNo}</h3>
+    Name: ${d.name}<br>
+    Mobile: ${d.mobile}<br>
+    Paid: ${d.paid} | Due: ${due}<br>
+    Date: ${d.start} to ${d.end}<br>
+    <button onclick="edit('${seatNo}')">Edit</button>
+    <button onclick="removeSeat('${seatNo}')">Reset</button>
+  `;
+}
+
 // EDIT
-function editData() {
-  if (!selectedSeat) return alert("Select seat!");
+function edit(seatNo) {
+  let d = JSON.parse(localStorage.getItem("seat_" + seatNo));
 
-  let data = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
-  if (!data) return alert("No data!");
-
-  name.value = data.name;
-  father.value = data.father;
-  mobile.value = data.mobile;
-  aadhar.value = data.aadhar;
-  payment.value = data.payment;
-
-  currentData = data;
+  name.value = d.name;
+  father.value = d.father;
+  mobile.value = d.mobile;
+  aadhar.value = d.aadhar;
+  paid.value = d.paid;
+  total.value = d.total;
+  start.value = d.start;
+  end.value = d.end;
+  payment.value = d.payment;
 }
 
-// SEARCH
-function searchData() {
-  let mobileVal = document.getElementById("searchMobile").value;
-
-  for (let i = 1; i <= 60; i++) {
-    let d = JSON.parse(localStorage.getItem("seat_" + i));
-    if (d && d.mobile == mobileVal) {
-      alert("Seat: " + d.seat + " | Name: " + d.name);
-      return;
-    }
-  }
-  alert("Not found");
+// DELETE
+function removeSeat(seatNo) {
+  localStorage.removeItem("seat_" + seatNo);
+  loadSeats();
+  document.getElementById("details").innerHTML = "";
 }
 
-// PRINT
-function printReceipt() {
-  if (!currentData) return alert("No data to print!");
+// LOAD COLORS
+function loadSeats() {
+  let today = new Date().toISOString().split('T')[0];
 
-  let win = window.open("", "", "width=400,height=400");
-  win.document.write("<h3>Wisdom Nest Receipt</h3>");
-  for (let key in currentData) {
-    win.document.write(key + ": " + currentData[key] + "<br>");
-  }
-  win.print();
-}
-
-// RESET
-function resetForm() {
-  document.querySelectorAll("input").forEach(i => i.value = "");
-  payment.value = "";
-}
-
-// LOAD
-window.onload = () => {
   seats.forEach(s => {
+    s.classList.remove("booked","due","expired");
     let d = JSON.parse(localStorage.getItem("seat_" + s.innerText));
+
     if (d) {
-      s.classList.add("booked");
+      let due = d.total - d.paid;
+
+      if (d.end < today) {
+        s.classList.add("expired");
+      } else if (due > 0) {
+        s.classList.add("due");
+      } else {
+        s.classList.add("booked");
+      }
+
       s.innerHTML = s.innerText + "<br>" + d.name;
+    } else {
+      s.style.background = "lightgreen";
+      s.innerHTML = s.innerText;
     }
   });
-};
+}
+
+function resetForm() {
+  document.querySelectorAll("input").forEach(i => i.value = "");
+}
+
+window.onload = loadSeats;
 </script>
 
 </body>
