@@ -1,59 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Wisdom Nest Layout</title>
-
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-    }
-
-    .container {
-      width: 90%;
-      margin: auto;
-    }
-
-    /* Top row */
-    .row1 {
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 10px;
-      margin-bottom: 30px;
-    }
-
-    /* Blocks */
-    .block {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 30px;
-    }
-
-    .left {
-      grid-template-columns: repeat(4, 70px);
-      float: left;
-    }
-
-    .right {
-      grid-template-columns: repeat(3, 70px);
-      float: right;
-    }
-
-    /* Boxes */
-    .box {
-      border: 2px solid black;
-      height: 40px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* Clear float */
-    .clearfix {
-      clear: both;
-    }
-  </style>
-
+<meta charset="UTF-8">
+<title>Library Seating</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -61,45 +11,97 @@
 
 <div class="container">
 
-  <!-- Top Row -->
-  <div class="row1">
-    <div class="box">8</div><div class="box">7</div><div class="box">6</div><div class="box">5</div>
-    <div class="box">4</div><div class="box">3</div><div class="box">2</div><div class="box">1</div>
+  <!-- Row 1 -->
+  <div class="row">
+    <div class="seat">8</div>
+    <div class="seat">7</div>
+    <div class="seat">6</div>
+    <div class="seat">5</div>
+    <div class="seat">4</div>
+    <div class="seat">3</div>
+    <div class="seat">2</div>
+    <div class="seat">1</div>
   </div>
 
-  <!-- Left Block -->
-  <div class="block left">
-    <div class="box">9</div><div class="box">10</div><div class="box">11</div><div class="box">12</div>
-    <div class="box">22</div><div class="box">21</div><div class="box">20</div><div class="box">19</div>
+  <!-- Row 2 -->
+  <div class="row">
+    <div class="seat">9</div>
+    <div class="seat">10</div>
+    <div class="seat">11</div>
+    <div class="seat">12</div>
+  </div>
 
-    <div class="box">23</div><div class="box">24</div><div class="box">25</div>
-    <div class="box">35</div><div class="box">34</div><div class="box">33</div><div class="box">32</div>
-
-    <div class="box">36</div><div class="box">37</div><div class="box">38</div><div class="box">39</div>
-    <div class="box">48</div><div class="box">47</div><div class="box">46</div>
-
-    <div class="box">49</div><div class="box">50</div><div class="box">51</div>
-
-    <div class="box">60</div><div class="box">59</div><div class="box">58</div><div class="box">57</div>
+  <!-- Row 3 -->
+  <div class="row">
+    <div class="seat">22</div>
+    <div class="seat">21</div>
+    <div class="seat">20</div>
+    <div class="seat">19</div>
   </div>
 
   <!-- Right Block -->
-  <div class="block right">
-    <div class="box">13</div><div class="box">14</div><div class="box">15</div>
-    <div class="box">18</div><div class="box">17</div><div class="box">16</div>
-
-    <div class="box">26</div><div class="box">27</div><div class="box">28</div>
-    <div class="box">31</div><div class="box">30</div><div class="box">29</div>
-
-    <div class="box">40</div><div class="box">41</div><div class="box">42</div>
-    <div class="box">45</div><div class="box">44</div><div class="box">43</div>
-
-    <div class="box">52</div><div class="box">53</div><div class="box">54</div>
-
-    <div class="box">56</div><div class="box">55</div>
+  <div class="row">
+    <div class="seat">13</div>
+    <div class="seat">14</div>
+    <div class="seat">15</div>
   </div>
 
-  <div class="clearfix"></div>
+  <div class="row">
+    <div class="seat">18</div>
+    <div class="seat">17</div>
+    <div class="seat">16</div>
+  </div>
+
+  <!-- Continue same pattern -->
+  <div class="row">
+    <div class="seat">23</div>
+    <div class="seat">24</div>
+    <div class="seat">25</div>
+  </div>
+
+  <div class="row">
+    <div class="seat">35</div>
+    <div class="seat">34</div>
+    <div class="seat">33</div>
+    <div class="seat">32</div>
+  </div>
+
+  <div class="row">
+    <div class="seat">26</div>
+    <div class="seat">27</div>
+    <div class="seat">28</div>
+  </div>
+
+  <div class="row">
+    <div class="seat">31</div>
+    <div class="seat">30</div>
+    <div class="seat">29</div>
+  </div>
+
+  <!-- Bottom -->
+  <div class="row">
+    <div class="seat">49</div>
+    <div class="seat">50</div>
+    <div class="seat">51</div>
+  </div>
+
+  <div class="row">
+    <div class="seat">52</div>
+    <div class="seat">53</div>
+    <div class="seat">54</div>
+  </div>
+
+  <div class="row">
+    <div class="seat">60</div>
+    <div class="seat">59</div>
+    <div class="seat">58</div>
+    <div class="seat">57</div>
+  </div>
+
+  <div class="row">
+    <div class="seat">56</div>
+    <div class="seat">55</div>
+  </div>
 
 </div>
 
