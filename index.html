@@ -7,7 +7,6 @@
 <style>
 body { font-family: Arial; text-align: center; }
 
-/* FORM */
 .form-box {
   border: 1px solid #ccc;
   padding: 15px;
@@ -21,7 +20,6 @@ input, select, button {
   margin: 5px;
 }
 
-/* GRID */
 .container {
   display: grid;
   grid-template-columns: repeat(8, 70px);
@@ -31,9 +29,11 @@ input, select, button {
 
 .seat {
   border: 1px solid black;
-  padding: 10px;
+  padding: 8px;
   cursor: pointer;
   background: lightgreen;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 .booked { background: red; color: white; }
@@ -79,81 +79,72 @@ input, select, button {
 <button onclick="resetForm()">Reset</button>
 </div>
 
-<div id="details">Click any seat</div>
+<div id="details">👉 Click any seat</div>
 
-<div class="container">
-
-<!-- SAME LAYOUT -->
-<div class="seat">8</div><div class="seat">7</div><div class="seat">6</div><div class="seat">5</div><div class="seat">4</div><div class="seat">3</div><div class="seat">2</div><div class="seat">1</div>
-
-<div class="seat">9</div><div class="seat">10</div><div class="seat">11</div><div class="seat">12</div>
-<div class="empty"></div>
-<div class="seat">13</div><div class="seat">14</div><div class="seat">15</div>
-
-<div class="seat">22</div><div class="seat">21</div><div class="seat">20</div><div class="seat">19</div>
-<div class="empty"></div>
-<div class="seat">18</div><div class="seat">17</div><div class="seat">16</div>
-
-<div class="seat">23</div><div class="seat">24</div><div class="seat">25</div>
-<div class="empty"></div><div class="empty"></div>
-<div class="seat">26</div><div class="seat">27</div><div class="seat">28</div>
-
-<div class="seat">35</div><div class="seat">34</div><div class="seat">33</div><div class="seat">32</div>
-<div class="empty"></div>
-<div class="seat">31</div><div class="seat">30</div><div class="seat">29</div>
-
-<div class="seat">36</div><div class="seat">37</div><div class="seat">38</div><div class="seat">39</div>
-<div class="empty"></div>
-<div class="seat">40</div><div class="seat">41</div><div class="seat">42</div>
-
-<div class="seat">48</div><div class="seat">47</div><div class="seat">46</div>
-<div class="empty"></div><div class="empty"></div>
-<div class="seat">45</div><div class="seat">44</div><div class="seat">43</div>
-
-<div class="seat">49</div><div class="seat">50</div><div class="seat">51</div>
-<div class="empty"></div><div class="empty"></div>
-<div class="seat">52</div><div class="seat">53</div><div class="seat">54</div>
-
-<div class="seat">60</div><div class="seat">59</div><div class="seat">58</div><div class="seat">57</div>
-<div class="empty"></div><div class="empty"></div>
-<div class="seat">56</div><div class="seat">55</div>
-
-</div>
+<div class="container" id="seatBox"></div>
 
 <script>
 let selectedSeat = null;
-const seats = document.querySelectorAll('.seat');
+const container = document.getElementById("seatBox");
 
-// CLICK
-seats.forEach(seat => {
-  seat.onclick = () => {
+// ✅ Layout array (same as your design)
+const layout = [
+[8,7,6,5,4,3,2,1],
+[9,10,11,12,0,13,14,15],
+[22,21,20,19,0,18,17,16],
+[23,24,25,0,0,26,27,28],
+[35,34,33,32,0,31,30,29],
+[36,37,38,39,0,40,41,42],
+[48,47,46,0,0,45,44,43],
+[49,50,51,0,0,52,53,54],
+[60,59,58,57,0,0,56,55]
+];
 
-    selectedSeat = seat.innerText;
+// 🔥 Create seats properly
+layout.forEach(row => {
+  row.forEach(num => {
+    let div = document.createElement("div");
 
-    seats.forEach(s => s.classList.remove("active"));
-    seat.classList.add("active");
-
-    let d = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
-
-    if (d) {
-      name.value = d.name;
-      father.value = d.father;
-      mobile.value = d.mobile;
-      aadhar.value = d.aadhar;
-      paid.value = d.paid;
-      total.value = d.total;
-      start.value = d.start;
-      end.value = d.end;
-      payment.value = d.payment;
+    if (num === 0) {
+      div.className = "empty";
     } else {
-      resetForm();
+      div.className = "seat";
+      div.dataset.seat = num;
+
+      div.onclick = () => selectSeat(div, num);
     }
 
-    showDetails();
-  };
+    container.appendChild(div);
+  });
 });
 
-// SAVE
+// ✅ Select seat
+function selectSeat(div, num) {
+  selectedSeat = num;
+
+  document.querySelectorAll('.seat').forEach(s => s.classList.remove("active"));
+  div.classList.add("active");
+
+  let d = JSON.parse(localStorage.getItem("seat_" + num));
+
+  if (d) {
+    name.value = d.name || "";
+    father.value = d.father || "";
+    mobile.value = d.mobile || "";
+    aadhar.value = d.aadhar || "";
+    paid.value = d.paid || "";
+    total.value = d.total || "";
+    start.value = d.start || "";
+    end.value = d.end || "";
+    payment.value = d.payment || "";
+  } else {
+    resetForm();
+  }
+
+  showDetails();
+}
+
+// ✅ Save
 function saveData() {
   if (!selectedSeat) return alert("Select seat first");
 
@@ -162,8 +153,8 @@ function saveData() {
     father: father.value,
     mobile: mobile.value,
     aadhar: aadhar.value,
-    paid: paid.value,
-    total: total.value,
+    paid: Number(paid.value || 0),
+    total: Number(total.value || 0),
     start: start.value,
     end: end.value,
     payment: payment.value
@@ -175,12 +166,12 @@ function saveData() {
   showDetails();
 }
 
-// SHOW DETAILS
+// ✅ Show details FIXED
 function showDetails() {
   let d = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
 
   if (!d) {
-    details.innerHTML = "Seat " + selectedSeat + "<br>Empty";
+    details.innerHTML = `<b>Seat ${selectedSeat}</b><br>Empty`;
     return;
   }
 
@@ -189,35 +180,31 @@ function showDetails() {
   details.innerHTML = `
     <b>Seat:</b> ${selectedSeat}<br>
     <b>Name:</b> ${d.name}<br>
+    <b>Father:</b> ${d.father}<br>
     <b>Mobile:</b> ${d.mobile}<br>
-    <b>Paid:</b> ${d.paid} | <b>Due:</b> ${due}<br>
+    <b>Paid:</b> ₹${d.paid} | <b>Due:</b> ₹${due}<br>
     <b>Date:</b> ${d.start} → ${d.end}<br><br>
 
-    <button onclick="editData()">Edit</button>
     <button onclick="deleteData()">Reset</button>
   `;
 }
 
-// EDIT (auto already handled)
-function editData() {
-  alert("Edit in form and click Save");
-}
-
-// DELETE
+// ✅ Delete
 function deleteData() {
   localStorage.removeItem("seat_" + selectedSeat);
   loadSeats();
   details.innerHTML = "Deleted";
 }
 
-// COLORS
+// ✅ Load seats (FIXED NAME SHOW)
 function loadSeats() {
   let today = new Date().toISOString().split('T')[0];
 
-  seats.forEach(s => {
-    s.classList.remove("booked","due","expired");
+  document.querySelectorAll('.seat').forEach(s => {
+    let num = s.dataset.seat;
+    let d = JSON.parse(localStorage.getItem("seat_" + num));
 
-    let d = JSON.parse(localStorage.getItem("seat_" + s.innerText));
+    s.className = "seat"; // reset
 
     if (d) {
       let due = d.total - d.paid;
@@ -230,18 +217,21 @@ function loadSeats() {
         s.classList.add("booked");
       }
 
-      s.innerHTML = s.innerText + "<br>" + d.name;
+      // 🔥 NAME FIX
+      s.innerHTML = num + "<br><small>" + d.name + "</small>";
     } else {
-      s.innerHTML = s.innerText;
+      s.innerHTML = num;
       s.style.background = "lightgreen";
     }
   });
 }
 
+// reset form
 function resetForm() {
   document.querySelectorAll("input").forEach(i => i.value = "");
 }
 
+// load on start
 window.onload = loadSeats;
 </script>
 
