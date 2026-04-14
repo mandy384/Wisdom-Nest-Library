@@ -43,6 +43,8 @@ input, select, button {
 
 .empty { visibility: hidden; }
 
+.active { border: 3px solid blue; }
+
 </style>
 </head>
 
@@ -50,6 +52,7 @@ input, select, button {
 
 <h2>Wisdom Nest</h2>
 
+<!-- FORM -->
 <div class="form-box">
   <input type="text" id="name" placeholder="Name">
   <input type="text" id="father" placeholder="Father Name">
@@ -73,6 +76,7 @@ input, select, button {
   <button onclick="resetForm()">Reset</button>
 </div>
 
+<!-- DETAILS -->
 <div id="details"></div>
 
 <!-- SEATS -->
@@ -123,6 +127,28 @@ const seats = document.querySelectorAll('.seat');
 seats.forEach(seat => {
   seat.onclick = () => {
     selectedSeat = seat.innerText;
+
+    // highlight
+    seats.forEach(s => s.classList.remove("active"));
+    seat.classList.add("active");
+
+    let d = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
+
+    // auto fill form
+    if (d) {
+      name.value = d.name;
+      father.value = d.father;
+      mobile.value = d.mobile;
+      aadhar.value = d.aadhar;
+      paid.value = d.paid;
+      total.value = d.total;
+      start.value = d.start;
+      end.value = d.end;
+      payment.value = d.payment;
+    } else {
+      resetForm();
+    }
+
     showDetails(selectedSeat);
   };
 });
@@ -145,24 +171,31 @@ function saveData() {
 
   localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
   loadSeats();
-  alert("Saved");
+  showDetails(selectedSeat);
 }
 
-// SHOW DETAILS
+// DETAILS
 function showDetails(seatNo) {
   let d = JSON.parse(localStorage.getItem("seat_" + seatNo));
-  if (!d) return document.getElementById("details").innerHTML = "Empty Seat";
+
+  if (!d) {
+    document.getElementById("details").innerHTML = `<h3>Seat ${seatNo}</h3>Empty`;
+    return;
+  }
 
   let due = d.total - d.paid;
 
   document.getElementById("details").innerHTML = `
-    <h3>Seat ${seatNo}</h3>
-    Name: ${d.name}<br>
-    Mobile: ${d.mobile}<br>
-    Paid: ${d.paid} | Due: ${due}<br>
-    Date: ${d.start} to ${d.end}<br>
-    <button onclick="edit('${seatNo}')">Edit</button>
-    <button onclick="removeSeat('${seatNo}')">Reset</button>
+    <div style="border:1px solid #000; padding:10px; margin:10px;">
+      <h3>Seat ${seatNo}</h3>
+      Name: ${d.name}<br>
+      Mobile: ${d.mobile}<br>
+      Paid: ₹${d.paid} | Due: ₹${due}<br>
+      Date: ${d.start} → ${d.end}<br><br>
+
+      <button onclick="edit('${seatNo}')">Edit</button>
+      <button onclick="removeSeat('${seatNo}')">Reset</button>
+    </div>
   `;
 }
 
@@ -188,12 +221,13 @@ function removeSeat(seatNo) {
   document.getElementById("details").innerHTML = "";
 }
 
-// LOAD COLORS
+// COLORS
 function loadSeats() {
   let today = new Date().toISOString().split('T')[0];
 
   seats.forEach(s => {
     s.classList.remove("booked","due","expired");
+
     let d = JSON.parse(localStorage.getItem("seat_" + s.innerText));
 
     if (d) {
