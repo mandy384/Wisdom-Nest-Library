@@ -33,21 +33,16 @@ input, select, button {
   cursor: pointer;
   background: lightgreen;
   font-size: 12px;
-  line-height: 1.2;
 }
-
-.booked { background: red; color: white; }
-.due { background: orange; }
-.expired { background: skyblue; }
 
 .empty { visibility: hidden; }
 .active { border: 3px solid blue; }
 
-#details {
-  border: 2px solid black;
-  padding: 10px;
-  width: 300px;
-  margin: 10px auto;
+/* legend */
+.legend span {
+  padding:5px 10px;
+  margin:5px;
+  display:inline-block;
 }
 </style>
 </head>
@@ -56,11 +51,17 @@ input, select, button {
 
 <h2>Wisdom Nest</h2>
 
+<div class="legend">
+  <span style="background:lightgreen;">Empty</span>
+  <span style="background:red;color:white;">Full Paid</span>
+  <span style="background:orange;">Due</span>
+  <span style="background:skyblue;">Expired</span>
+</div>
+
 <div class="form-box">
 <input id="name" placeholder="Name">
 <input id="father" placeholder="Father Name">
 <input id="mobile" placeholder="Mobile">
-<input id="aadhar" placeholder="Aadhar">
 
 <input id="paid" type="number" placeholder="Paid">
 <input id="total" type="number" placeholder="Total">
@@ -75,11 +76,20 @@ input, select, button {
 <option>Dew</option>
 </select>
 
+<!-- 🔥 COLOR SELECT -->
+<select id="color">
+<option value="">Auto Color</option>
+<option value="lightgreen">Green</option>
+<option value="red">Red</option>
+<option value="orange">Orange</option>
+<option value="skyblue">Sky Blue</option>
+</select>
+
 <button onclick="saveData()">Save / Update</button>
 <button onclick="resetForm()">Reset</button>
 </div>
 
-<div id="details">👉 Click any seat</div>
+<div id="details">👉 Click seat</div>
 
 <div class="container" id="seatBox"></div>
 
@@ -87,7 +97,6 @@ input, select, button {
 let selectedSeat = null;
 const container = document.getElementById("seatBox");
 
-// ✅ Layout array (same as your design)
 const layout = [
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -100,139 +109,162 @@ const layout = [
 [60,59,58,57,0,0,56,55]
 ];
 
-// 🔥 Create seats properly
-layout.forEach(row => {
-  row.forEach(num => {
-    let div = document.createElement("div");
+// create seats
+layout.forEach(row=>{
+  row.forEach(num=>{
+    let div=document.createElement("div");
 
-    if (num === 0) {
-      div.className = "empty";
-    } else {
-      div.className = "seat";
-      div.dataset.seat = num;
+    if(num===0){
+      div.className="empty";
+    }else{
+      div.className="seat";
+      div.dataset.seat=num;
 
-      div.onclick = () => selectSeat(div, num);
+      div.onclick=()=>selectSeat(div,num);
+
+      // 🔥 RIGHT CLICK COLOR CHANGE
+      div.oncontextmenu=(e)=>{
+        e.preventDefault();
+        changeColor(div,num);
+      };
     }
 
     container.appendChild(div);
   });
 });
 
-// ✅ Select seat
-function selectSeat(div, num) {
-  selectedSeat = num;
+// select
+function selectSeat(div,num){
+  selectedSeat=num;
 
-  document.querySelectorAll('.seat').forEach(s => s.classList.remove("active"));
+  document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
   div.classList.add("active");
 
-  let d = JSON.parse(localStorage.getItem("seat_" + num));
+  let d=JSON.parse(localStorage.getItem("seat_"+num));
 
-  if (d) {
-    name.value = d.name || "";
-    father.value = d.father || "";
-    mobile.value = d.mobile || "";
-    aadhar.value = d.aadhar || "";
-    paid.value = d.paid || "";
-    total.value = d.total || "";
-    start.value = d.start || "";
-    end.value = d.end || "";
-    payment.value = d.payment || "";
-  } else {
+  if(d){
+    name.value=d.name||"";
+    father.value=d.father||"";
+    mobile.value=d.mobile||"";
+    paid.value=d.paid||"";
+    total.value=d.total||"";
+    start.value=d.start||"";
+    end.value=d.end||"";
+    payment.value=d.payment||"";
+    color.value=d.color||"";
+  }else{
     resetForm();
   }
 
   showDetails();
 }
 
-// ✅ Save
-function saveData() {
-  if (!selectedSeat) return alert("Select seat first");
+// save
+function saveData(){
+  if(!selectedSeat) return alert("Select seat");
 
-  let data = {
-    name: name.value,
-    father: father.value,
-    mobile: mobile.value,
-    aadhar: aadhar.value,
-    paid: Number(paid.value || 0),
-    total: Number(total.value || 0),
-    start: start.value,
-    end: end.value,
-    payment: payment.value
+  let data={
+    name:name.value,
+    father:father.value,
+    mobile:mobile.value,
+    paid:Number(paid.value||0),
+    total:Number(total.value||0),
+    start:start.value,
+    end:end.value,
+    payment:payment.value,
+    color:color.value
   };
 
-  localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
-
+  localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
   loadSeats();
   showDetails();
 }
 
-// ✅ Show details FIXED
-function showDetails() {
-  let d = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
+// details
+function showDetails(){
+  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
 
-  if (!d) {
-    details.innerHTML = `<b>Seat ${selectedSeat}</b><br>Empty`;
+  if(!d){
+    details.innerHTML="Seat "+selectedSeat+" Empty";
     return;
   }
 
-  let due = d.total - d.paid;
+  let due=d.total-d.paid;
 
-  details.innerHTML = `
-    <b>Seat:</b> ${selectedSeat}<br>
-    <b>Name:</b> ${d.name}<br>
-    <b>Father:</b> ${d.father}<br>
-    <b>Mobile:</b> ${d.mobile}<br>
-    <b>Paid:</b> ₹${d.paid} | <b>Due:</b> ₹${due}<br>
-    <b>Date:</b> ${d.start} → ${d.end}<br><br>
-
-    <button onclick="deleteData()">Reset</button>
+  details.innerHTML=`
+  <b>Seat:</b> ${selectedSeat}<br>
+  <b>Name:</b> ${d.name}<br>
+  <b>Mobile:</b> ${d.mobile}<br>
+  <b>Paid:</b> ${d.paid} | Due: ${due}<br>
+  <b>Date:</b> ${d.start} → ${d.end}<br>
+  <button onclick="deleteData()">Reset</button>
   `;
 }
 
-// ✅ Delete
-function deleteData() {
-  localStorage.removeItem("seat_" + selectedSeat);
+// delete
+function deleteData(){
+  localStorage.removeItem("seat_"+selectedSeat);
   loadSeats();
-  details.innerHTML = "Deleted";
+  details.innerHTML="Deleted";
 }
 
-// ✅ Load seats (FIXED NAME SHOW)
-function loadSeats() {
-  let today = new Date().toISOString().split('T')[0];
+// 🔥 RIGHT CLICK COLOR CHANGE
+function changeColor(div,num){
+  let color=prompt("Enter color (red, green, orange, skyblue):");
 
-  document.querySelectorAll('.seat').forEach(s => {
-    let num = s.dataset.seat;
-    let d = JSON.parse(localStorage.getItem("seat_" + num));
+  if(!color) return;
 
-    s.className = "seat"; // reset
+  let d=JSON.parse(localStorage.getItem("seat_"+num))||{};
+  d.color=color;
 
-    if (d) {
-      let due = d.total - d.paid;
+  localStorage.setItem("seat_"+num,JSON.stringify(d));
+  loadSeats();
+}
 
-      if (d.end && d.end < today) {
-        s.classList.add("expired");
-      } else if (due > 0) {
-        s.classList.add("due");
-      } else {
-        s.classList.add("booked");
+// load seats
+function loadSeats(){
+  let today=new Date().toISOString().split('T')[0];
+
+  document.querySelectorAll('.seat').forEach(s=>{
+    let num=s.dataset.seat;
+    let d=JSON.parse(localStorage.getItem("seat_"+num));
+
+    s.style.background="";
+    s.style.color="black";
+
+    if(d){
+
+      // manual color first
+      if(d.color){
+        s.style.background=d.color;
+        s.style.color="white";
+      }else{
+        let due=d.total-d.paid;
+
+        if(d.end && d.end<today){
+          s.style.background="skyblue";
+        }else if(due>0){
+          s.style.background="orange";
+        }else{
+          s.style.background="red";
+          s.style.color="white";
+        }
       }
 
-      // 🔥 NAME FIX
-      s.innerHTML = num + "<br><small>" + d.name + "</small>";
-    } else {
-      s.innerHTML = num;
-      s.style.background = "lightgreen";
+      s.innerHTML=num+"<br><small>"+(d.name||"")+"</small>";
+    }else{
+      s.innerHTML=num;
+      s.style.background="lightgreen";
     }
   });
 }
 
-// reset form
-function resetForm() {
-  document.querySelectorAll("input").forEach(i => i.value = "");
+function resetForm(){
+  document.querySelectorAll("input").forEach(i=>i.value="");
+  color.value="";
 }
 
-// load on start
-window.onload = loadSeats;
+window.onload=loadSeats;
 </script>
 
 </body>
