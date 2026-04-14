@@ -17,8 +17,8 @@ body { font-family: Arial; text-align: center; }
 .seat {
   border: 1px solid black;
   padding: 5px;
-  font-size: 11px;
-  height: 55px;
+  font-size: 10px;
+  height: 60px;
   cursor: pointer;
   background: lightgreen;
 }
@@ -26,7 +26,6 @@ body { font-family: Arial; text-align: center; }
 .empty { visibility: hidden; }
 .active { border: 3px solid blue; }
 
-/* GREEN SAVE BUTTON */
 #saveBtn {
   background: green;
   color: white;
@@ -35,8 +34,25 @@ body { font-family: Arial; text-align: center; }
   cursor: pointer;
 }
 
-#saveBtn:disabled {
-  background: lightgray;
+.form-box {
+  border: 1px solid #ccc;
+  padding: 10px;
+  width: 320px;
+  margin: 20px auto;
+}
+
+input, select {
+  width: 95%;
+  margin: 4px;
+  padding: 6px;
+}
+
+#details {
+  border: 2px solid black;
+  padding: 10px;
+  width: 320px;
+  margin: 10px auto;
+  text-align: left;
 }
 </style>
 </head>
@@ -45,17 +61,35 @@ body { font-family: Arial; text-align: center; }
 
 <h2>Wisdom Nest</h2>
 
+<div class="form-box">
 <input id="name" placeholder="Name">
-<br><br>
-<button id="saveBtn" onclick="saveData()" disabled>Save</button>
+<input id="father" placeholder="Father Name">
+<input id="mobile" placeholder="Mobile">
+<input id="aadhar" placeholder="Aadhar">
+
+<input id="paid" type="number" placeholder="Paid">
+<input id="total" type="number" placeholder="Total">
+
+<input id="start" type="date">
+<input id="end" type="date">
+
+<select id="payment">
+<option value="">Payment Mode</option>
+<option>Online</option>
+<option>Cash</option>
+<option>Due</option>
+</select>
+
+<button id="saveBtn" onclick="saveData()">Save</button>
+</div>
+
+<div id="details">👉 Click seat</div>
 
 <div class="container" id="box"></div>
 
 <script>
-let selectedSeat = null;
-const saveBtn = document.getElementById("saveBtn");
+let selectedSeat=null;
 
-// SAME FORMAT
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -77,7 +111,7 @@ layout.forEach(row=>{
       div.className="empty";
     }else{
       div.className="seat";
-      div.innerHTML=num;
+      div.dataset.seat=num;
 
       div.onclick=function(){
         selectedSeat=num;
@@ -85,16 +119,23 @@ layout.forEach(row=>{
         document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
         this.classList.add("active");
 
-        // enable save
-        saveBtn.disabled=false;
+        let d=JSON.parse(localStorage.getItem("seat_"+num));
 
-        let data=localStorage.getItem("seat_"+num);
-        if(data){
-          data=JSON.parse(data);
-          name.value=data.name;
+        if(d){
+          name.value=d.name||"";
+          father.value=d.father||"";
+          mobile.value=d.mobile||"";
+          aadhar.value=d.aadhar||"";
+          paid.value=d.paid||"";
+          total.value=d.total||"";
+          start.value=d.start||"";
+          end.value=d.end||"";
+          payment.value=d.payment||"";
         }else{
-          name.value="";
+          document.querySelectorAll("input").forEach(i=>i.value="");
         }
+
+        showDetails();
       };
     }
 
@@ -104,43 +145,76 @@ layout.forEach(row=>{
 
 // SAVE
 function saveData(){
-  if(selectedSeat===null){
+  if(!selectedSeat){
     alert("Seat select karo");
     return;
   }
 
-  let userName=document.getElementById("name").value.trim();
-
-  if(userName===""){
-    alert("Name daalo");
+  if(!name.value.trim()){
+    alert("Name required");
     return;
   }
 
-  localStorage.setItem("seat_"+selectedSeat, JSON.stringify({
-    name:userName
-  }));
+  let data={
+    name:name.value.trim(),
+    father:father.value,
+    mobile:mobile.value,
+    aadhar:aadhar.value,
+    paid:Number(paid.value||0),
+    total:Number(total.value||0),
+    start:start.value,
+    end:end.value,
+    payment:payment.value
+  };
+
+  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
 
   loadSeats();
-  alert("✅ Saved");
+  showDetails();
+  alert("Saved");
 }
 
-// LOAD
+// load seats
 function loadSeats(){
   document.querySelectorAll('.seat').forEach(s=>{
-    let num=s.innerText.split("\n")[0];
-    let data=localStorage.getItem("seat_"+num);
+    let num=s.dataset.seat;
+    let d=JSON.parse(localStorage.getItem("seat_"+num));
 
-    if(data){
-      data=JSON.parse(data);
-      s.innerHTML=num+"<br>"+data.name;
+    if(d && d.name){
+      s.innerHTML = num + "<br>" + d.name;
       s.style.background="red";
       s.style.color="white";
     }else{
-      s.innerHTML=num;
+      s.innerHTML = num;
       s.style.background="lightgreen";
       s.style.color="black";
     }
   });
+}
+
+// details
+function showDetails(){
+  if(!selectedSeat) return;
+
+  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
+
+  if(!d){
+    details.innerHTML="Seat "+selectedSeat+" Empty";
+    return;
+  }
+
+  let due=d.total-d.paid;
+
+  details.innerHTML=`
+  <b>Seat:</b> ${selectedSeat}<br>
+  <b>Name:</b> ${d.name}<br>
+  <b>Father:</b> ${d.father}<br>
+  <b>Mobile:</b> ${d.mobile}<br>
+  <b>Aadhar:</b> ${d.aadhar}<br>
+  <b>Paid:</b> ₹${d.paid} | Due: ₹${due}<br>
+  <b>Payment:</b> ${d.payment}<br>
+  <b>Date:</b> ${d.start} → ${d.end}
+  `;
 }
 
 window.onload=loadSeats;
