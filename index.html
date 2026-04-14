@@ -2,22 +2,21 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Wisdom Nest</title>
+<title>Seat System</title>
 
 <style>
 body { font-family: Arial; text-align: center; }
 
 .container {
   display: grid;
-  grid-template-columns: repeat(8, 70px);
+  grid-template-columns: repeat(8, 60px);
   gap: 10px;
   justify-content: center;
 }
 
 .seat {
   border: 1px solid black;
-  height: 60px;
-  font-size: 11px;
+  height: 55px;
   cursor: pointer;
   background: lightgreen;
 }
@@ -25,30 +24,20 @@ body { font-family: Arial; text-align: center; }
 .active { border: 3px solid blue; }
 .empty { visibility: hidden; }
 
-.form-box {
-  border: 1px solid #ccc;
-  padding: 10px;
-  width: 300px;
-  margin: 20px auto;
-}
-
 input, button {
-  width: 95%;
+  margin: 5px;
   padding: 6px;
-  margin: 4px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Wisdom Nest</h2>
+<h2>Seat Booking</h2>
 
-<div class="form-box">
 <input id="name" placeholder="Name">
 <input id="mobile" placeholder="Mobile">
 <button onclick="saveData()">Save</button>
-</div>
 
 <div class="container" id="seatBox"></div>
 
@@ -56,6 +45,7 @@ input, button {
 let selectedSeat = null;
 const box = document.getElementById("seatBox");
 
+// layout
 const layout = [
 [1,2,3,4,5,6,7,8],
 [9,10,11,12,0,13,14,15],
@@ -70,25 +60,31 @@ const layout = [
 
 // create seats
 layout.forEach(row=>{
-  row.forEach(n=>{
+  row.forEach(num=>{
     let div=document.createElement("div");
 
-    if(n===0){
+    if(num===0){
       div.className="empty";
     }else{
       div.className="seat";
-      div.innerText=n;
+      div.dataset.seat=num;
+      div.innerHTML=num;
 
-      // 🔥 FIX CLICK
       div.onclick=function(){
-        selectedSeat=n;
+        selectedSeat = this.dataset.seat;
 
         document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
-        div.classList.add("active");
+        this.classList.add("active");
 
-        let d=JSON.parse(localStorage.getItem("seat_"+n));
-        name.value = d ? d.name : "";
-        mobile.value = d ? d.mobile : "";
+        // load data
+        let data = JSON.parse(localStorage.getItem("seat_"+selectedSeat));
+        if(data){
+          name.value = data.name;
+          mobile.value = data.mobile;
+        }else{
+          name.value="";
+          mobile.value="";
+        }
       };
     }
 
@@ -96,49 +92,50 @@ layout.forEach(row=>{
   });
 });
 
-// 🔥 SAVE FIX
+// 🔥 SAVE (FINAL FIX)
 function saveData(){
-  if(selectedSeat===null){
+  if(!selectedSeat){
     alert("Seat select karo");
     return;
   }
 
-  let userName=name.value.trim();
+  let userName = name.value.trim();
 
   if(userName===""){
     alert("Name daalo");
     return;
   }
 
-  let data={
-    name:userName,
-    mobile:mobile.value || ""
+  let data = {
+    name: userName,
+    mobile: mobile.value || ""
   };
 
   localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
 
   loadSeats();
-  alert("Saved successfully");
+  alert("✅ Data Saved");
 }
 
-// 🔥 LOAD
+// load seats
 function loadSeats(){
   document.querySelectorAll('.seat').forEach(s=>{
-    let num=s.innerText.split("\n")[0];
-    let d=JSON.parse(localStorage.getItem("seat_"+num));
+    let num = s.dataset.seat;
+    let data = JSON.parse(localStorage.getItem("seat_"+num));
 
-    if(d && d.name){
-      s.innerHTML=num+"<br>"+d.name;
+    if(data && data.name){
+      s.innerHTML = num + "<br>" + data.name;
       s.style.background="red";
       s.style.color="white";
     }else{
-      s.innerHTML=num;
+      s.innerHTML = num;
       s.style.background="lightgreen";
       s.style.color="black";
     }
   });
 }
 
+// init
 window.onload=loadSeats;
 </script>
 
