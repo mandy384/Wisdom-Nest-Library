@@ -2,137 +2,179 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Library Seating</title>
+<title>Library Seat Booking</title>
 
 <style>
-body {
-  font-family: Arial;
-  text-align: center;
-}
+body { font-family: Arial; text-align:center; }
 
-h2 {
-  margin-bottom: 20px;
-}
-
-/* Main Grid */
 .container {
   display: grid;
   grid-template-columns: repeat(8, 60px);
   gap: 10px;
   justify-content: center;
+  margin-bottom: 30px;
 }
 
-/* Seat box */
 .seat {
   border: 1px solid black;
   padding: 15px;
-  font-weight: bold;
+  cursor: pointer;
 }
 
-/* Empty space */
-.empty {
-  visibility: hidden;
-}
+.red { background: red; color:white; }
+.green { background: green; color:white; }
+.orange { background: orange; }
+.sky { background: skyblue; }
+
+.empty { visibility:hidden; }
+
+form { margin-top:20px; }
+
+input { margin:5px; padding:5px; }
+button { padding:5px 10px; margin:5px; }
 </style>
 
 </head>
 <body>
 
-<h2>Wisdom Nest</h2>
+<h2>Wisdom Nest Library</h2>
 
-<div class="container">
+<div class="container" id="seats"></div>
 
-  <!-- Row 1 -->
-  <div class="seat">8</div>
-  <div class="seat">7</div>
-  <div class="seat">6</div>
-  <div class="seat">5</div>
-  <div class="seat">4</div>
-  <div class="seat">3</div>
-  <div class="seat">2</div>
-  <div class="seat">1</div>
+<h3>Seat Booking Form</h3>
 
-  <!-- Row 2 -->
-  <div class="seat">9</div>
-  <div class="seat">10</div>
-  <div class="seat">11</div>
-  <div class="seat">12</div>
-  <div class="empty"></div>
-  <div class="seat">13</div>
-  <div class="seat">14</div>
-  <div class="seat">15</div>
+<form id="form">
+  <input type="text" id="name" placeholder="Name"><br>
+  <input type="text" id="father" placeholder="Father Name"><br>
+  <input type="text" id="mobile" placeholder="Mobile No"><br>
+  <input type="text" id="aadhar" placeholder="Aadhar No"><br>
+  From: <input type="date" id="from">
+  To: <input type="date" id="to"><br>
 
-  <!-- Row 3 -->
-  <div class="seat">22</div>
-  <div class="seat">21</div>
-  <div class="seat">20</div>
-  <div class="seat">19</div>
-  <div class="empty"></div>
-  <div class="seat">18</div>
-  <div class="seat">17</div>
-  <div class="seat">16</div>
+  Total: <input type="number" id="total"><br>
+  Paid: <input type="number" id="paid"><br>
+  Due: <input type="number" id="due" readonly><br>
 
-  <!-- Row 4 -->
-  <div class="seat">23</div>
-  <div class="seat">24</div>
-  <div class="seat">25</div>
-  <div class="empty"></div>
-  <div class="empty"></div>
-  <div class="seat">26</div>
-  <div class="seat">27</div>
-  <div class="seat">28</div>
+  <button type="button" onclick="saveData()">Save</button>
+  <button type="button" onclick="resetForm()">Reset</button>
+  <button type="button" onclick="sendSMS()">SMS</button>
+</form>
 
-  <!-- Row 5 -->
-  <div class="seat">35</div>
-  <div class="seat">34</div>
-  <div class="seat">33</div>
-  <div class="seat">32</div>
-  <div class="empty"></div>
-  <div class="seat">31</div>
-  <div class="seat">30</div>
-  <div class="seat">29</div>
+<script>
+let selectedSeat = null;
+let data = {};
 
-  <!-- Row 6 -->
-  <div class="seat">36</div>
-  <div class="seat">37</div>
-  <div class="seat">38</div>
-  <div class="seat">39</div>
-  <div class="empty"></div>
-  <div class="seat">40</div>
-  <div class="seat">41</div>
-  <div class="seat">42</div>
+const layout = [
+ [8,7,6,5,4,3,2,1],
+ [9,10,11,12,null,13,14,15],
+ [22,21,20,19,null,18,17,16],
+ [23,24,25,null,null,26,27,28],
+ [35,34,33,32,null,31,30,29],
+ [36,37,38,39,null,40,41,42],
+ [48,47,46,null,null,45,44,43],
+ [49,50,51,null,null,52,53,54],
+ [60,59,58,57,null,null,56,55]
+];
 
-  <!-- Row 7 -->
-  <div class="seat">48</div>
-  <div class="seat">47</div>
-  <div class="seat">46</div>
-  <div class="empty"></div>
-  <div class="empty"></div>
-  <div class="seat">45</div>
-  <div class="seat">44</div>
-  <div class="seat">43</div>
+const container = document.getElementById("seats");
 
-  <!-- Row 8 -->
-  <div class="seat">49</div>
-  <div class="seat">50</div>
-  <div class="seat">51</div>
-  <div class="empty"></div>
-  <div class="empty"></div>
-  <div class="seat">52</div>
-  <div class="seat">53</div>
-  <div class="seat">54</div>
+layout.forEach(row=>{
+  row.forEach(seat=>{
+    let div = document.createElement("div");
 
-  <!-- Row 9 -->
-  <div class="seat">60</div>
-  <div class="seat">59</div>
-  <div class="seat">58</div>
-  <div class="seat">57</div>
-  <div class="empty"></div>
-  <div class="empty"></div>
-  <div class="seat">56</div>
-  <div class="seat">55</div>
+    if(seat===null){
+      div.className="empty";
+    } else {
+      div.className="seat red";
+      div.innerText=seat;
 
-</div>
+      div.onclick=()=>{
+        selectedSeat=seat;
+        loadData();
+      };
+    }
+    container.appendChild(div);
+  });
+});
+
+document.getElementById("paid").oninput = calcDue;
+
+function calcDue(){
+  let total = +document.getElementById("total").value || 0;
+  let paid = +document.getElementById("paid").value || 0;
+  document.getElementById("due").value = total - paid;
+}
+
+function saveData(){
+  if(!selectedSeat){ alert("Select Seat"); return; }
+
+  let obj = {
+    name: name.value,
+    father: father.value,
+    mobile: mobile.value,
+    aadhar: aadhar.value,
+    from: from.value,
+    to: to.value,
+    total: total.value,
+    paid: paid.value,
+    due: due.value
+  };
+
+  data[selectedSeat] = obj;
+  updateColor(selectedSeat);
+  alert("Saved");
+}
+
+function loadData(){
+  let d = data[selectedSeat];
+  if(!d) return;
+
+  name.value = d.name;
+  father.value = d.father;
+  mobile.value = d.mobile;
+  aadhar.value = d.aadhar;
+  from.value = d.from;
+  to.value = d.to;
+  total.value = d.total;
+  paid.value = d.paid;
+  due.value = d.due;
+}
+
+function updateColor(seat){
+  let all = document.querySelectorAll(".seat");
+
+  all.forEach(div=>{
+    if(div.innerText == seat){
+      let d = data[seat];
+
+      div.classList.remove("red","green","orange","sky");
+
+      let today = new Date().toISOString().split('T')[0];
+
+      if(d.due == 0){
+        div.classList.add("green");
+      }
+      else if(d.to < today){
+        div.classList.add("sky");
+      }
+      else if(d.due > 0){
+        div.classList.add("orange");
+      }
+    }
+  });
+}
+
+function resetForm(){
+  document.getElementById("form").reset();
+}
+
+function sendSMS(){
+  if(!mobile.value){ alert("Enter Mobile"); return; }
+
+  let msg = "Library Payment Done";
+  window.open(https://wa.me/91${mobile.value}?text=${msg});
+}
+</script>
 
 </body>
 </html>
