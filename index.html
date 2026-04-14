@@ -24,6 +24,7 @@ body { font-family: Arial; text-align: center; }
 }
 
 .empty { visibility: hidden; }
+.active { border: 3px solid blue; }
 </style>
 </head>
 
@@ -37,10 +38,10 @@ body { font-family: Arial; text-align: center; }
 <div class="container" id="seatBox"></div>
 
 <script>
-let selectedSeat=null;
-const box=document.getElementById("seatBox");
+let selectedSeat = null;
+const box = document.getElementById("seatBox");
 
-const layout=[
+const layout = [
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
 [22,21,20,19,0,18,17,16],
@@ -52,65 +53,80 @@ const layout=[
 [60,59,58,57,0,0,56,55]
 ];
 
-// create seats
-layout.forEach(row=>{
-  row.forEach(n=>{
-    let d=document.createElement("div");
+// 🔥 CREATE SEATS (FIXED CLICK)
+layout.forEach(row => {
+  row.forEach(n => {
+    let div = document.createElement("div");
 
-    if(n===0){
-      d.className="empty";
-    }else{
-      d.className="seat";
-      d.dataset.seat=n;
+    if (n === 0) {
+      div.className = "empty";
+    } else {
+      div.className = "seat";
+      div.innerText = n;
+      div.dataset.seat = n;
 
-      d.onclick=()=>{
-        selectedSeat=n;
-        let d=JSON.parse(localStorage.getItem("seat_"+n));
-        name.value = d ? d.name : "";
-      };
+      div.addEventListener("click", function() {
+        selectedSeat = this.dataset.seat;
+
+        document.querySelectorAll('.seat').forEach(s => s.classList.remove("active"));
+        this.classList.add("active");
+
+        let d = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
+        name.value = d && d.name ? d.name : "";
+      });
     }
 
-    box.appendChild(d);
+    box.appendChild(div);
   });
 });
 
-// save
-function saveData(){
-  if(!selectedSeat) return alert("Select seat");
-  if(!name.value.trim()) return alert("Enter name");
+// 🔥 SAVE FIX
+function saveData() {
+  if (!selectedSeat) {
+    alert("पहले seat select करो");
+    return;
+  }
 
-  let data={ name:name.value.trim() };
+  let userName = name.value.trim();
 
-  localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
+  if (!userName) {
+    alert("Name डालो");
+    return;
+  }
+
+  let data = {
+    name: userName
+  };
+
+  localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
 
   loadSeats();
+  alert("Saved");
 }
 
-// 🔥 MAIN FIX HERE
-function loadSeats(){
-  document.querySelectorAll('.seat').forEach(s=>{
-    let num=s.dataset.seat;
-    let d=JSON.parse(localStorage.getItem("seat_"+num));
+// 🔥 LOAD SEATS (NAME SHOW FIX)
+function loadSeats() {
+  document.querySelectorAll('.seat').forEach(s => {
+    let num = s.dataset.seat;
+    let d = JSON.parse(localStorage.getItem("seat_" + num));
 
-    if(d && d.name){
-      // ✅ BOOKED → NAME SHOW
+    if (d && d.name) {
       s.innerHTML = `
         <div>${num}</div>
         <div style="font-size:10px;">${d.name}</div>
       `;
-      s.style.background="red";
-      s.style.color="white";
-
-    }else{
-      // ✅ EMPTY → ONLY NUMBER
+      s.style.background = "red";
+      s.style.color = "white";
+    } else {
       s.innerHTML = num;
-      s.style.background="lightgreen";
-      s.style.color="black";
+      s.style.background = "lightgreen";
+      s.style.color = "black";
     }
   });
 }
 
-window.onload=loadSeats;
+// LOAD
+window.onload = loadSeats;
 </script>
 
 </body>
