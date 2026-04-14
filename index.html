@@ -2,9 +2,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Seat System</title>
+<title>Wisdom Nest</title>
 
 <style>
+body { font-family: Arial; text-align: center; }
+
 .container {
   display: grid;
   grid-template-columns: repeat(8, 60px);
@@ -14,14 +16,17 @@
 
 .seat {
   border: 1px solid black;
+  padding: 5px;
+  font-size: 11px;
   height: 55px;
   cursor: pointer;
   background: lightgreen;
 }
 
+.empty { visibility: hidden; }
 .active { border: 3px solid blue; }
 
-/* 🔥 GREEN SAVE BUTTON */
+/* GREEN SAVE BUTTON */
 #saveBtn {
   background: green;
   color: white;
@@ -32,16 +37,16 @@
 
 #saveBtn:disabled {
   background: lightgray;
-  cursor: not-allowed;
 }
 </style>
 </head>
 
 <body>
 
-<h3>Seat Booking</h3>
+<h2>Wisdom Nest</h2>
 
 <input id="name" placeholder="Name">
+<br><br>
 <button id="saveBtn" onclick="saveData()" disabled>Save</button>
 
 <div class="container" id="box"></div>
@@ -50,70 +55,88 @@
 let selectedSeat = null;
 const saveBtn = document.getElementById("saveBtn");
 
+// SAME FORMAT
+const layout=[
+[8,7,6,5,4,3,2,1],
+[9,10,11,12,0,13,14,15],
+[22,21,20,19,0,18,17,16],
+[23,24,25,0,0,26,27,28],
+[35,34,33,32,0,31,30,29],
+[36,37,38,39,0,40,41,42],
+[48,47,46,0,0,45,44,43],
+[49,50,51,0,0,52,53,54],
+[60,59,58,57,0,0,56,55]
+];
+
 // create seats
-for(let i=1;i<=60;i++){
-  let d=document.createElement("div");
-  d.className="seat";
-  d.innerText=i;
+layout.forEach(row=>{
+  row.forEach(num=>{
+    let div=document.createElement("div");
 
-  d.onclick=function(){
-    selectedSeat = i;
-
-    document.querySelectorAll(".seat").forEach(s=>s.classList.remove("active"));
-    this.classList.add("active");
-
-    // enable save
-    saveBtn.disabled = false;
-
-    let data = localStorage.getItem("seat_"+i);
-    if(data){
-      data = JSON.parse(data);
-      name.value = data.name;
+    if(num===0){
+      div.className="empty";
     }else{
-      name.value="";
+      div.className="seat";
+      div.innerHTML=num;
+
+      div.onclick=function(){
+        selectedSeat=num;
+
+        document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
+        this.classList.add("active");
+
+        // enable save
+        saveBtn.disabled=false;
+
+        let data=localStorage.getItem("seat_"+num);
+        if(data){
+          data=JSON.parse(data);
+          name.value=data.name;
+        }else{
+          name.value="";
+        }
+      };
     }
-  };
 
-  box.appendChild(d);
-}
+    box.appendChild(div);
+  });
+});
 
-// 🔥 SAVE WORKING
+// SAVE
 function saveData(){
-  if(selectedSeat === null){
+  if(selectedSeat===null){
     alert("Seat select karo");
     return;
   }
 
-  let userName = document.getElementById("name").value.trim();
+  let userName=document.getElementById("name").value.trim();
 
-  if(userName === ""){
+  if(userName===""){
     alert("Name daalo");
     return;
   }
 
-  let data = {
-    name: userName
-  };
-
-  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
+  localStorage.setItem("seat_"+selectedSeat, JSON.stringify({
+    name:userName
+  }));
 
   loadSeats();
-  alert("✅ Saved Successfully");
+  alert("✅ Saved");
 }
 
-// load seats
+// LOAD
 function loadSeats(){
-  document.querySelectorAll(".seat").forEach(s=>{
-    let num = s.innerText.split("\n")[0];
-    let data = localStorage.getItem("seat_"+num);
+  document.querySelectorAll('.seat').forEach(s=>{
+    let num=s.innerText.split("\n")[0];
+    let data=localStorage.getItem("seat_"+num);
 
     if(data){
-      data = JSON.parse(data);
-      s.innerHTML = num + "<br>" + data.name;
+      data=JSON.parse(data);
+      s.innerHTML=num+"<br>"+data.name;
       s.style.background="red";
       s.style.color="white";
     }else{
-      s.innerHTML = num;
+      s.innerHTML=num;
       s.style.background="lightgreen";
       s.style.color="black";
     }
