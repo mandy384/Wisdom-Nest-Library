@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Wisdom Nest</title>
@@ -32,7 +32,6 @@ input, select, button {
 .seat {
   border: 1px solid black;
   padding: 10px;
-  font-size: 12px;
   cursor: pointer;
   background: lightgreen;
 }
@@ -42,9 +41,14 @@ input, select, button {
 .expired { background: skyblue; }
 
 .empty { visibility: hidden; }
-
 .active { border: 3px solid blue; }
 
+#details {
+  border: 2px solid black;
+  padding: 10px;
+  width: 300px;
+  margin: 10px auto;
+}
 </style>
 </head>
 
@@ -52,35 +56,32 @@ input, select, button {
 
 <h2>Wisdom Nest</h2>
 
-<!-- FORM -->
 <div class="form-box">
-  <input type="text" id="name" placeholder="Name">
-  <input type="text" id="father" placeholder="Father Name">
-  <input type="text" id="mobile" placeholder="Mobile Number">
-  <input type="text" id="aadhar" placeholder="Aadhar Number">
+<input id="name" placeholder="Name">
+<input id="father" placeholder="Father Name">
+<input id="mobile" placeholder="Mobile">
+<input id="aadhar" placeholder="Aadhar">
 
-  <input type="number" id="paid" placeholder="Paid Amount">
-  <input type="number" id="total" placeholder="Total Amount">
+<input id="paid" type="number" placeholder="Paid">
+<input id="total" type="number" placeholder="Total">
 
-  <input type="date" id="start">
-  <input type="date" id="end">
+<input id="start" type="date">
+<input id="end" type="date">
 
-  <select id="payment">
-    <option value="">Payment Mode</option>
-    <option>Online</option>
-    <option>Cash</option>
-    <option>Dew</option>
-  </select>
+<select id="payment">
+<option value="">Payment</option>
+<option>Online</option>
+<option>Cash</option>
+<option>Dew</option>
+</select>
 
-  <button onclick="saveData()">Save</button>
-  <button onclick="resetForm()">Reset</button>
+<button onclick="saveData()">Save / Update</button>
+<button onclick="resetForm()">Reset</button>
 </div>
 
-<!-- DETAILS -->
-<div id="details"></div>
+<div id="details">Click any seat</div>
 
-<!-- SEATS -->
-<div class="container" id="seats">
+<div class="container">
 
 <!-- SAME LAYOUT -->
 <div class="seat">8</div><div class="seat">7</div><div class="seat">6</div><div class="seat">5</div><div class="seat">4</div><div class="seat">3</div><div class="seat">2</div><div class="seat">1</div>
@@ -123,18 +124,17 @@ input, select, button {
 let selectedSeat = null;
 const seats = document.querySelectorAll('.seat');
 
-// CLICK SEAT
+// CLICK
 seats.forEach(seat => {
   seat.onclick = () => {
+
     selectedSeat = seat.innerText;
 
-    // highlight
     seats.forEach(s => s.classList.remove("active"));
     seat.classList.add("active");
 
     let d = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
 
-    // auto fill form
     if (d) {
       name.value = d.name;
       father.value = d.father;
@@ -149,13 +149,13 @@ seats.forEach(seat => {
       resetForm();
     }
 
-    showDetails(selectedSeat);
+    showDetails();
   };
 });
 
 // SAVE
 function saveData() {
-  if (!selectedSeat) return alert("Select seat");
+  if (!selectedSeat) return alert("Select seat first");
 
   let data = {
     name: name.value,
@@ -170,55 +170,44 @@ function saveData() {
   };
 
   localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
+
   loadSeats();
-  showDetails(selectedSeat);
+  showDetails();
 }
 
-// DETAILS
-function showDetails(seatNo) {
-  let d = JSON.parse(localStorage.getItem("seat_" + seatNo));
+// SHOW DETAILS
+function showDetails() {
+  let d = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
 
   if (!d) {
-    document.getElementById("details").innerHTML = `<h3>Seat ${seatNo}</h3>Empty`;
+    details.innerHTML = "Seat " + selectedSeat + "<br>Empty";
     return;
   }
 
   let due = d.total - d.paid;
 
-  document.getElementById("details").innerHTML = `
-    <div style="border:1px solid #000; padding:10px; margin:10px;">
-      <h3>Seat ${seatNo}</h3>
-      Name: ${d.name}<br>
-      Mobile: ${d.mobile}<br>
-      Paid: ₹${d.paid} | Due: ₹${due}<br>
-      Date: ${d.start} → ${d.end}<br><br>
+  details.innerHTML = `
+    <b>Seat:</b> ${selectedSeat}<br>
+    <b>Name:</b> ${d.name}<br>
+    <b>Mobile:</b> ${d.mobile}<br>
+    <b>Paid:</b> ${d.paid} | <b>Due:</b> ${due}<br>
+    <b>Date:</b> ${d.start} → ${d.end}<br><br>
 
-      <button onclick="edit('${seatNo}')">Edit</button>
-      <button onclick="removeSeat('${seatNo}')">Reset</button>
-    </div>
+    <button onclick="editData()">Edit</button>
+    <button onclick="deleteData()">Reset</button>
   `;
 }
 
-// EDIT
-function edit(seatNo) {
-  let d = JSON.parse(localStorage.getItem("seat_" + seatNo));
-
-  name.value = d.name;
-  father.value = d.father;
-  mobile.value = d.mobile;
-  aadhar.value = d.aadhar;
-  paid.value = d.paid;
-  total.value = d.total;
-  start.value = d.start;
-  end.value = d.end;
-  payment.value = d.payment;
+// EDIT (auto already handled)
+function editData() {
+  alert("Edit in form and click Save");
 }
 
 // DELETE
-function removeSeat(seatNo) {
-  localStorage.removeItem("seat_" + seatNo);
+function deleteData() {
+  localStorage.removeItem("seat_" + selectedSeat);
   loadSeats();
-  document.getElementById("details").innerHTML = "";
+  details.innerHTML = "Deleted";
 }
 
 // COLORS
@@ -233,7 +222,7 @@ function loadSeats() {
     if (d) {
       let due = d.total - d.paid;
 
-      if (d.end < today) {
+      if (d.end && d.end < today) {
         s.classList.add("expired");
       } else if (due > 0) {
         s.classList.add("due");
@@ -243,8 +232,8 @@ function loadSeats() {
 
       s.innerHTML = s.innerText + "<br>" + d.name;
     } else {
-      s.style.background = "lightgreen";
       s.innerHTML = s.innerText;
+      s.style.background = "lightgreen";
     }
   });
 }
