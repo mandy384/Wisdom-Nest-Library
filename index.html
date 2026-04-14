@@ -14,7 +14,7 @@ body { font-family: Arial; text-align: center; }
   margin: 20px auto;
 }
 
-input, button {
+input, select, button {
   width: 95%;
   padding: 8px;
   margin: 5px;
@@ -29,7 +29,7 @@ input, button {
 
 .seat {
   border: 1px solid black;
-  height: 55px;
+  height: 60px;
   font-size: 11px;
   cursor: pointer;
   background: lightgreen;
@@ -41,8 +41,9 @@ input, button {
 #details {
   border: 2px solid black;
   padding: 10px;
-  width: 300px;
+  width: 320px;
   margin: 10px auto;
+  text-align: left;
 }
 </style>
 </head>
@@ -53,17 +54,28 @@ input, button {
 
 <div class="form-box">
 <input id="name" placeholder="Name">
-<input id="mobile" placeholder="Mobile">
-<input id="paid" type="number" placeholder="Paid">
-<input id="total" type="number" placeholder="Total">
+<input id="father" placeholder="Father Name">
+<input id="mobile" placeholder="Mobile Number">
+<input id="aadhar" placeholder="Aadhar Number">
+
+<input id="paid" type="number" placeholder="Paid Amount">
+<input id="total" type="number" placeholder="Total Amount">
+
 <input id="start" type="date">
 <input id="end" type="date">
+
+<select id="payment">
+<option value="">Payment Mode</option>
+<option>Online</option>
+<option>Cash</option>
+<option>Due</option>
+</select>
 
 <button onclick="saveData()">Save / Update</button>
 <button onclick="resetForm()">Reset</button>
 </div>
 
-<div id="details">👉 Click seat</div>
+<div id="details">👉 Click any seat</div>
 
 <div class="container" id="seatBox"></div>
 
@@ -100,7 +112,7 @@ layout.forEach(row=>{
   });
 });
 
-// select
+// select seat
 function selectSeat(div,num){
   selectedSeat=num;
 
@@ -111,11 +123,14 @@ function selectSeat(div,num){
 
   if(d){
     name.value=d.name||"";
+    father.value=d.father||"";
     mobile.value=d.mobile||"";
+    aadhar.value=d.aadhar||"";
     paid.value=d.paid||"";
     total.value=d.total||"";
     start.value=d.start||"";
     end.value=d.end||"";
+    payment.value=d.payment||"";
   }else{
     resetForm();
   }
@@ -123,18 +138,21 @@ function selectSeat(div,num){
   showDetails();
 }
 
-// 🔥 SAVE FIXED
+// save
 function saveData(){
   if(!selectedSeat) return alert("Seat select karo");
-  if(!name.value.trim()) return alert("Name enter karo");
+  if(!name.value.trim()) return alert("Name required");
 
   let data={
     name:name.value.trim(),
-    mobile:mobile.value||"",
+    father:father.value,
+    mobile:mobile.value,
+    aadhar:aadhar.value,
     paid:Number(paid.value||0),
     total:Number(total.value||0),
-    start:start.value||"",
-    end:end.value||""
+    start:start.value,
+    end:end.value,
+    payment:payment.value
   };
 
   localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
@@ -143,7 +161,7 @@ function saveData(){
   showDetails();
 }
 
-// details
+// show details
 function showDetails(){
   let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
 
@@ -157,9 +175,13 @@ function showDetails(){
   details.innerHTML=`
   <b>Seat:</b> ${selectedSeat}<br>
   <b>Name:</b> ${d.name}<br>
+  <b>Father:</b> ${d.father}<br>
   <b>Mobile:</b> ${d.mobile}<br>
-  <b>Paid:</b> ${d.paid} | Due: ${due}<br>
-  <b>Date:</b> ${d.start} → ${d.end}<br>
+  <b>Aadhar:</b> ${d.aadhar}<br>
+  <b>Paid:</b> ₹${d.paid} | <b>Due:</b> ₹${due}<br>
+  <b>Payment Mode:</b> ${d.payment}<br>
+  <b>Date:</b> ${d.start} → ${d.end}<br><br>
+
   <button onclick="deleteData()">Reset</button>
   `;
 }
@@ -192,6 +214,7 @@ function loadSeats(){
   });
 }
 
+// reset form
 function resetForm(){
   document.querySelectorAll("input").forEach(i=>i.value="");
 }
