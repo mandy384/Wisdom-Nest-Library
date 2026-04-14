@@ -11,16 +11,28 @@
   gap: 10px;
   justify-content: center;
 }
+
 .seat {
   border: 1px solid black;
   height: 55px;
   cursor: pointer;
   background: lightgreen;
 }
+
 .active { border: 3px solid blue; }
 
-button:disabled {
-  background: gray;
+/* 🔥 GREEN SAVE BUTTON */
+#saveBtn {
+  background: green;
+  color: white;
+  padding: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+#saveBtn:disabled {
+  background: lightgray;
+  cursor: not-allowed;
 }
 </style>
 </head>
@@ -50,7 +62,7 @@ for(let i=1;i<=60;i++){
     document.querySelectorAll(".seat").forEach(s=>s.classList.remove("active"));
     this.classList.add("active");
 
-    // 🔥 ENABLE SAVE BUTTON
+    // enable save
     saveBtn.disabled = false;
 
     let data = localStorage.getItem("seat_"+i);
@@ -65,29 +77,31 @@ for(let i=1;i<=60;i++){
   box.appendChild(d);
 }
 
-// SAVE
+// 🔥 SAVE WORKING
 function saveData(){
   if(selectedSeat === null){
     alert("Seat select karo");
     return;
   }
 
-  let userName = name.value.trim();
+  let userName = document.getElementById("name").value.trim();
 
   if(userName === ""){
     alert("Name daalo");
     return;
   }
 
-  localStorage.setItem("seat_"+selectedSeat, JSON.stringify({
-    name:userName
-  }));
+  let data = {
+    name: userName
+  };
+
+  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
 
   loadSeats();
-  alert("✅ Saved");
+  alert("✅ Saved Successfully");
 }
 
-// LOAD
+// load seats
 function loadSeats(){
   document.querySelectorAll(".seat").forEach(s=>{
     let num = s.innerText.split("\n")[0];
