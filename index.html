@@ -27,10 +27,9 @@ input, select, button {
 /* GRID */
 .container {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(8, 70px);
   gap: 10px;
-  max-width: 500px;
-  margin: auto;
+  justify-content: center;
 }
 
 .seat {
@@ -53,10 +52,10 @@ input, select, button {
 
 <!-- FORM -->
 <div class="form-box">
-  <input type="text" id="name" placeholder="Name"><br>
-  <input type="text" id="father" placeholder="Father Name"><br>
-  <input type="text" id="mobile" placeholder="Mobile Number"><br>
-  <input type="text" id="aadhar" placeholder="Aadhar Number"><br>
+  <input type="text" id="name" placeholder="Name">
+  <input type="text" id="father" placeholder="Father Name">
+  <input type="text" id="mobile" placeholder="Mobile Number">
+  <input type="text" id="aadhar" placeholder="Aadhar Number">
 
   <select id="payment">
     <option value="">Payment Mode</option>
@@ -71,30 +70,69 @@ input, select, button {
 </div>
 
 <!-- SEATS -->
-<div class="container" id="seats"></div>
+<div class="container">
+
+<!-- Row 1 -->
+<div class="seat">8</div><div class="seat">7</div><div class="seat">6</div><div class="seat">5</div><div class="seat">4</div><div class="seat">3</div><div class="seat">2</div><div class="seat">1</div>
+
+<!-- Row 2 -->
+<div class="seat">9</div><div class="seat">10</div><div class="seat">11</div><div class="seat">12</div>
+<div class="empty"></div>
+<div class="seat">13</div><div class="seat">14</div><div class="seat">15</div>
+
+<!-- Row 3 -->
+<div class="seat">22</div><div class="seat">21</div><div class="seat">20</div><div class="seat">19</div>
+<div class="empty"></div>
+<div class="seat">18</div><div class="seat">17</div><div class="seat">16</div>
+
+<!-- Row 4 -->
+<div class="seat">23</div><div class="seat">24</div><div class="seat">25</div>
+<div class="empty"></div><div class="empty"></div>
+<div class="seat">26</div><div class="seat">27</div><div class="seat">28</div>
+
+<!-- Row 5 -->
+<div class="seat">35</div><div class="seat">34</div><div class="seat">33</div><div class="seat">32</div>
+<div class="empty"></div>
+<div class="seat">31</div><div class="seat">30</div><div class="seat">29</div>
+
+<!-- Row 6 -->
+<div class="seat">36</div><div class="seat">37</div><div class="seat">38</div><div class="seat">39</div>
+<div class="empty"></div>
+<div class="seat">40</div><div class="seat">41</div><div class="seat">42</div>
+
+<!-- Row 7 -->
+<div class="seat">48</div><div class="seat">47</div><div class="seat">46</div>
+<div class="empty"></div><div class="empty"></div>
+<div class="seat">45</div><div class="seat">44</div><div class="seat">43</div>
+
+<!-- Row 8 -->
+<div class="seat">49</div><div class="seat">50</div><div class="seat">51</div>
+<div class="empty"></div><div class="empty"></div>
+<div class="seat">52</div><div class="seat">53</div><div class="seat">54</div>
+
+<!-- Row 9 -->
+<div class="seat">60</div><div class="seat">59</div><div class="seat">58</div><div class="seat">57</div>
+<div class="empty"></div><div class="empty"></div>
+<div class="seat">56</div><div class="seat">55</div>
+
+</div>
 
 <script>
-const container = document.getElementById('seats');
 let selectedSeat = null;
+const seats = document.querySelectorAll('.seat');
 
-// CREATE 60 SEATS
-for (let i = 1; i <= 60; i++) {
-  let div = document.createElement('div');
-  div.classList.add('seat');
-  div.innerText = i;
+// SELECT
+seats.forEach(seat => {
+  seat.onclick = () => {
+    if (seat.classList.contains('booked')) return;
 
-  div.onclick = () => {
-    if (div.classList.contains('booked')) return;
-
-    document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
-    div.classList.add('selected');
-    selectedSeat = i;
+    seats.forEach(s => s.classList.remove('selected'));
+    seat.classList.add('selected');
+    selectedSeat = seat.innerText;
   };
+});
 
-  container.appendChild(div);
-}
-
-// SAVE DATA
+// SAVE
 function saveData() {
   if (!selectedSeat) return alert("Select seat first!");
 
@@ -109,18 +147,21 @@ function saveData() {
 
   localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
 
-  document.querySelectorAll('.seat')[selectedSeat-1].classList.add('booked');
+  seats.forEach(s => {
+    if (s.innerText == selectedSeat) {
+      s.classList.add('booked');
+    }
+  });
 
   alert("Saved Successfully");
 }
 
-// EDIT DATA
+// EDIT
 function editData() {
   if (!selectedSeat) return alert("Select seat first!");
 
   let data = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
-
-  if (!data) return alert("No data found!");
+  if (!data) return alert("No data!");
 
   name.value = data.name;
   father.value = data.father;
@@ -135,13 +176,12 @@ function resetForm() {
   payment.value = "";
 }
 
-// LOAD SAVED SEATS
+// LOAD
 window.onload = () => {
-  for (let i = 1; i <= 60; i++) {
-    if (localStorage.getItem("seat_" + i)) {
-      document.querySelectorAll('.seat')[i-1].classList.add('booked');
-    }
-  }
+  seats.forEach(s => {
+    let d = localStorage.getItem("seat_" + s.innerText);
+    if (d) s.classList.add("booked");
+  });
 };
 </script>
 
