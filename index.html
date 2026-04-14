@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Library Seating</title>
+<title>Library System</title>
 
 <style>
 body {
@@ -10,129 +10,153 @@ body {
   text-align: center;
 }
 
-h2 {
-  margin-bottom: 20px;
-}
-
-/* Main Grid */
+/* Grid */
 .container {
   display: grid;
   grid-template-columns: repeat(8, 60px);
   gap: 10px;
   justify-content: center;
+  margin: 20px;
 }
 
-/* Seat box */
+/* Seat */
 .seat {
   border: 1px solid black;
   padding: 15px;
-  font-weight: bold;
+  cursor: pointer;
 }
 
-/* Empty space */
-.empty {
-  visibility: hidden;
+.selected { background: green; color: white; }
+.booked { background: red; color: white; cursor: not-allowed; }
+.empty { visibility: hidden; }
+
+/* Form */
+form {
+  margin-top: 20px;
+}
+
+input, select {
+  margin: 5px;
+  padding: 5px;
 }
 </style>
 
 </head>
 <body>
 
-<h2>Wisdom Nest</h2>
+<h2>Wisdom Nest Library</h2>
 
-<div class="container">
-
-  <!-- Row 1 -->
-  <div class="seat">8</div>
-  <div class="seat">7</div>
-  <div class="seat">6</div>
-  <div class="seat">5</div>
-  <div class="seat">4</div>
-  <div class="seat">3</div>
-  <div class="seat">2</div>
+<!-- Seats -->
+<div class="container" id="seats">
   <div class="seat">1</div>
+  <div class="seat">2</div>
+  <div class="seat">3</div>
+  <div class="seat">4</div>
+  <div class="seat">5</div>
+  <div class="seat">6</div>
+  <div class="seat">7</div>
+  <div class="seat">8</div>
 
-  <!-- Row 2 -->
   <div class="seat">9</div>
   <div class="seat">10</div>
   <div class="seat">11</div>
   <div class="seat">12</div>
-  <div class="empty"></div>
   <div class="seat">13</div>
   <div class="seat">14</div>
   <div class="seat">15</div>
-
-  <!-- Row 3 -->
-  <div class="seat">22</div>
-  <div class="seat">21</div>
-  <div class="seat">20</div>
-  <div class="seat">19</div>
-  <div class="empty"></div>
-  <div class="seat">18</div>
-  <div class="seat">17</div>
   <div class="seat">16</div>
-
-  <!-- Row 4 -->
-  <div class="seat">23</div>
-  <div class="seat">24</div>
-  <div class="seat">25</div>
-  <div class="empty"></div>
-  <div class="empty"></div>
-  <div class="seat">26</div>
-  <div class="seat">27</div>
-  <div class="seat">28</div>
-
-  <!-- Row 5 -->
-  <div class="seat">35</div>
-  <div class="seat">34</div>
-  <div class="seat">33</div>
-  <div class="seat">32</div>
-  <div class="empty"></div>
-  <div class="seat">31</div>
-  <div class="seat">30</div>
-  <div class="seat">29</div>
-
-  <!-- Row 6 -->
-  <div class="seat">36</div>
-  <div class="seat">37</div>
-  <div class="seat">38</div>
-  <div class="seat">39</div>
-  <div class="empty"></div>
-  <div class="seat">40</div>
-  <div class="seat">41</div>
-  <div class="seat">42</div>
-
-  <!-- Row 7 -->
-  <div class="seat">48</div>
-  <div class="seat">47</div>
-  <div class="seat">46</div>
-  <div class="empty"></div>
-  <div class="empty"></div>
-  <div class="seat">45</div>
-  <div class="seat">44</div>
-  <div class="seat">43</div>
-
-  <!-- Row 8 -->
-  <div class="seat">49</div>
-  <div class="seat">50</div>
-  <div class="seat">51</div>
-  <div class="empty"></div>
-  <div class="empty"></div>
-  <div class="seat">52</div>
-  <div class="seat">53</div>
-  <div class="seat">54</div>
-
-  <!-- Row 9 -->
-  <div class="seat">60</div>
-  <div class="seat">59</div>
-  <div class="seat">58</div>
-  <div class="seat">57</div>
-  <div class="empty"></div>
-  <div class="empty"></div>
-  <div class="seat">56</div>
-  <div class="seat">55</div>
-
 </div>
+
+<!-- Student Form -->
+<h3>Student Details</h3>
+
+<form id="form">
+  <input type="text" id="name" placeholder="Student Name" required>
+  <input type="text" id="father" placeholder="Father Name" required>
+  <input type="text" id="mobile" placeholder="Mobile Number" required>
+  <input type="text" id="aadhar" placeholder="Aadhar Number" required>
+
+  <select id="payment">
+    <option value="Online">Online</option>
+    <option value="Cash">Cash</option>
+    <option value="Due">Due</option>
+  </select>
+
+  <button type="submit">Book Seat</button>
+</form>
+
+<!-- Info -->
+<p id="selected">Selected Seat: None</p>
+<p id="stats"></p>
+
+<script>
+const seats = document.querySelectorAll('.seat');
+const selectedText = document.getElementById('selected');
+const stats = document.getElementById('stats');
+const form = document.getElementById('form');
+
+let selectedSeat = null;
+let seatData = {};
+
+seats.forEach(seat => {
+  seat.addEventListener('click', () => {
+    if (seat.classList.contains('booked')) return;
+
+    seats.forEach(s => s.classList.remove('selected'));
+    seat.classList.add('selected');
+
+    selectedSeat = seat.textContent;
+    selectedText.textContent = "Selected Seat: " + selectedSeat;
+  });
+});
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  if (!selectedSeat) {
+    alert("Select a seat first!");
+    return;
+  }
+
+  const student = {
+    name: document.getElementById('name').value,
+    father: document.getElementById('father').value,
+    mobile: document.getElementById('mobile').value,
+    aadhar: document.getElementById('aadhar').value,
+    payment: document.getElementById('payment').value
+  };
+
+  seatData[selectedSeat] = student;
+
+  // mark booked
+  seats.forEach(seat => {
+    if (seat.textContent === selectedSeat) {
+      seat.classList.remove('selected');
+      seat.classList.add('booked');
+    }
+  });
+
+  form.reset();
+  selectedSeat = null;
+  selectedText.textContent = "Selected Seat: None";
+
+  updateStats();
+});
+
+function updateStats() {
+  const total = seats.length;
+  const booked = Object.keys(seatData).length;
+  const available = total - booked;
+
+  stats.textContent =
+    "Total Seats: " + total +
+    " | Booked: " + booked +
+    " | Available: " + available;
+}
+
+// init
+updateStats();
+</script>
 
 </body>
 </html>
