@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Library System</title>
+<title>Wisdom Nest</title>
 
 <style>
 body {
@@ -10,138 +10,139 @@ body {
   text-align: center;
 }
 
-/* Grid */
-.container {
-  display: grid;
-  grid-template-columns: repeat(10, 60px);
-  gap: 10px;
-  justify-content: center;
-  margin: 20px;
+/* FORM */
+.form-box {
+  border: 1px solid #ccc;
+  padding: 15px;
+  margin: 20px auto;
+  width: 300px;
 }
 
-/* Seat */
+input, select, button {
+  width: 90%;
+  padding: 8px;
+  margin: 5px;
+}
+
+/* GRID */
+.container {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 10px;
+  max-width: 500px;
+  margin: auto;
+}
+
 .seat {
   border: 1px solid black;
   padding: 15px;
   cursor: pointer;
+  background: #e0e0e0;
 }
 
 .selected { background: green; color: white; }
 .booked { background: red; color: white; cursor: not-allowed; }
+.empty { visibility: hidden; }
 
-form { margin-top: 20px; }
-
-input, select {
-  margin: 5px;
-  padding: 5px;
-}
 </style>
-
 </head>
+
 <body>
 
-<h2>Wisdom Nest Library (60 Seats)</h2>
+<h2>Wisdom Nest</h2>
 
-<!-- Seats -->
-<div class="container" id="seats"></div>
-
-<!-- Student Form -->
-<h3>Student Details</h3>
-
-<form id="form">
-  <input type="text" id="name" placeholder="Student Name" required>
-  <input type="text" id="father" placeholder="Father Name" required>
-  <input type="text" id="mobile" placeholder="Mobile Number" required>
-  <input type="text" id="aadhar" placeholder="Aadhar Number" required>
+<!-- FORM -->
+<div class="form-box">
+  <input type="text" id="name" placeholder="Name"><br>
+  <input type="text" id="father" placeholder="Father Name"><br>
+  <input type="text" id="mobile" placeholder="Mobile Number"><br>
+  <input type="text" id="aadhar" placeholder="Aadhar Number"><br>
 
   <select id="payment">
-    <option value="Online">Online</option>
-    <option value="Cash">Cash</option>
-    <option value="Due">Due</option>
+    <option value="">Payment Mode</option>
+    <option>Online</option>
+    <option>Cash</option>
+    <option>Dew</option>
   </select>
 
-  <button type="submit">Book Seat</button>
-</form>
+  <button onclick="saveData()">Save</button>
+  <button onclick="editData()">Edit</button>
+  <button onclick="resetForm()">Reset</button>
+</div>
 
-<!-- Info -->
-<p id="selected">Selected Seat: None</p>
-<p id="stats"></p>
+<!-- SEATS -->
+<div class="container" id="seats"></div>
 
 <script>
-const seatContainer = document.getElementById('seats');
-const selectedText = document.getElementById('selected');
-const stats = document.getElementById('stats');
-const form = document.getElementById('form');
-
+const container = document.getElementById('seats');
 let selectedSeat = null;
-let seatData = {};
 
-// 🔥 Generate 60 seats automatically
+// CREATE 60 SEATS
 for (let i = 1; i <= 60; i++) {
-  const div = document.createElement('div');
+  let div = document.createElement('div');
   div.classList.add('seat');
-  div.textContent = i;
+  div.innerText = i;
 
-  div.addEventListener('click', () => {
+  div.onclick = () => {
     if (div.classList.contains('booked')) return;
 
     document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
     div.classList.add('selected');
-
     selectedSeat = i;
-    selectedText.textContent = "Selected Seat: " + i;
-  });
-
-  seatContainer.appendChild(div);
-}
-
-// Form submit
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-
-  if (!selectedSeat) {
-    alert("Select a seat first!");
-    return;
-  }
-
-  const student = {
-    name: document.getElementById('name').value,
-    father: document.getElementById('father').value,
-    mobile: document.getElementById('mobile').value,
-    aadhar: document.getElementById('aadhar').value,
-    payment: document.getElementById('payment').value
   };
 
-  seatData[selectedSeat] = student;
-
-  document.querySelectorAll('.seat').forEach(seat => {
-    if (seat.textContent == selectedSeat) {
-      seat.classList.remove('selected');
-      seat.classList.add('booked');
-    }
-  });
-
-  form.reset();
-  selectedSeat = null;
-  selectedText.textContent = "Selected Seat: None";
-
-  updateStats();
-});
-
-// Stats
-function updateStats() {
-  const total = 60;
-  const booked = Object.keys(seatData).length;
-  const available = total - booked;
-
-  stats.textContent =
-    "Total Seats: " + total +
-    " | Booked: " + booked +
-    " | Available: " + available;
+  container.appendChild(div);
 }
 
-// Init
-updateStats();
+// SAVE DATA
+function saveData() {
+  if (!selectedSeat) return alert("Select seat first!");
+
+  let data = {
+    name: name.value,
+    father: father.value,
+    mobile: mobile.value,
+    aadhar: aadhar.value,
+    payment: payment.value,
+    seat: selectedSeat
+  };
+
+  localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
+
+  document.querySelectorAll('.seat')[selectedSeat-1].classList.add('booked');
+
+  alert("Saved Successfully");
+}
+
+// EDIT DATA
+function editData() {
+  if (!selectedSeat) return alert("Select seat first!");
+
+  let data = JSON.parse(localStorage.getItem("seat_" + selectedSeat));
+
+  if (!data) return alert("No data found!");
+
+  name.value = data.name;
+  father.value = data.father;
+  mobile.value = data.mobile;
+  aadhar.value = data.aadhar;
+  payment.value = data.payment;
+}
+
+// RESET
+function resetForm() {
+  document.querySelectorAll("input").forEach(i => i.value = "");
+  payment.value = "";
+}
+
+// LOAD SAVED SEATS
+window.onload = () => {
+  for (let i = 1; i <= 60; i++) {
+    if (localStorage.getItem("seat_" + i)) {
+      document.querySelectorAll('.seat')[i-1].classList.add('booked');
+    }
+  }
+};
 </script>
 
 </body>
