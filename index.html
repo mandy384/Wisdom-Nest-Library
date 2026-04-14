@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Seat Save Fix</title>
+<title>Seat System</title>
 
 <style>
 .container {
@@ -18,22 +18,27 @@
   background: lightgreen;
 }
 .active { border: 3px solid blue; }
+
+button:disabled {
+  background: gray;
+}
 </style>
 </head>
 
 <body>
 
-<h3>Seat System</h3>
+<h3>Seat Booking</h3>
 
 <input id="name" placeholder="Name">
-<button onclick="saveData()">Save</button>
+<button id="saveBtn" onclick="saveData()" disabled>Save</button>
 
 <div class="container" id="box"></div>
 
 <script>
-let selectedSeat = "";
+let selectedSeat = null;
+const saveBtn = document.getElementById("saveBtn");
 
-// create 1–60 seats
+// create seats
 for(let i=1;i<=60;i++){
   let d=document.createElement("div");
   d.className="seat";
@@ -45,38 +50,41 @@ for(let i=1;i<=60;i++){
     document.querySelectorAll(".seat").forEach(s=>s.classList.remove("active"));
     this.classList.add("active");
 
+    // 🔥 ENABLE SAVE BUTTON
+    saveBtn.disabled = false;
+
     let data = localStorage.getItem("seat_"+i);
     if(data){
       data = JSON.parse(data);
-      document.getElementById("name").value = data.name;
+      name.value = data.name;
     }else{
-      document.getElementById("name").value="";
+      name.value="";
     }
   };
 
   box.appendChild(d);
 }
 
-// SAVE (🔥 GUARANTEED)
+// SAVE
 function saveData(){
-  if(selectedSeat===""){
+  if(selectedSeat === null){
     alert("Seat select karo");
     return;
   }
 
-  let name = document.getElementById("name").value.trim();
+  let userName = name.value.trim();
 
-  if(name===""){
+  if(userName === ""){
     alert("Name daalo");
     return;
   }
 
-  let data = { name:name };
-
-  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
+  localStorage.setItem("seat_"+selectedSeat, JSON.stringify({
+    name:userName
+  }));
 
   loadSeats();
-  alert("Saved");
+  alert("✅ Saved");
 }
 
 // LOAD
@@ -89,9 +97,11 @@ function loadSeats(){
       data = JSON.parse(data);
       s.innerHTML = num + "<br>" + data.name;
       s.style.background="red";
+      s.style.color="white";
     }else{
       s.innerHTML = num;
       s.style.background="lightgreen";
+      s.style.color="black";
     }
   });
 }
