@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Library Seat Booking</title>
+<title>Library System</title>
 
 <style>
 body { font-family: Arial; text-align:center; }
 
+/* GRID */
 .container {
   display: grid;
   grid-template-columns: repeat(8, 60px);
   gap: 10px;
   justify-content: center;
-  margin-bottom: 30px;
 }
 
 .seat {
@@ -21,17 +21,24 @@ body { font-family: Arial; text-align:center; }
   cursor: pointer;
 }
 
-.red { background: red; color:white; }
-.green { background: green; color:white; }
-.orange { background: orange; }
-.sky { background: skyblue; }
+.red { background:red; color:white; }
+.green { background:green; color:white; }
+.orange { background:orange; }
+.sky { background:skyblue; }
 
 .empty { visibility:hidden; }
 
-form { margin-top:20px; }
+/* FORM */
+form input { margin:5px; padding:5px; }
 
-input { margin:5px; padding:5px; }
-button { padding:5px 10px; margin:5px; }
+/* RECEIPT */
+#receipt {
+  border:1px solid black;
+  padding:15px;
+  width:300px;
+  margin:20px auto;
+  text-align:left;
+}
 </style>
 
 </head>
@@ -41,13 +48,14 @@ button { padding:5px 10px; margin:5px; }
 
 <div class="container" id="seats"></div>
 
-<h3>Seat Booking Form</h3>
+<h3>Booking Form</h3>
 
 <form id="form">
   <input type="text" id="name" placeholder="Name"><br>
   <input type="text" id="father" placeholder="Father Name"><br>
   <input type="text" id="mobile" placeholder="Mobile No"><br>
   <input type="text" id="aadhar" placeholder="Aadhar No"><br>
+
   From: <input type="date" id="from">
   To: <input type="date" id="to"><br>
 
@@ -57,13 +65,17 @@ button { padding:5px 10px; margin:5px; }
 
   <button type="button" onclick="saveData()">Save</button>
   <button type="button" onclick="resetForm()">Reset</button>
-  <button type="button" onclick="sendSMS()">SMS</button>
+  <button type="button" onclick="printReceipt()">Print</button>
 </form>
 
-<script>
-let selectedSeat = null;
-let data = {};
+<!-- RECEIPT FORMAT -->
+<div id="receipt"></div>
 
+<script>
+let selectedSeat=null;
+let data={};
+
+/* SAME SEATING FORMAT */
 const layout = [
  [8,7,6,5,4,3,2,1],
  [9,10,11,12,null,13,14,15],
@@ -76,103 +88,124 @@ const layout = [
  [60,59,58,57,null,null,56,55]
 ];
 
-const container = document.getElementById("seats");
+const container=document.getElementById("seats");
 
+/* CREATE SEATS */
 layout.forEach(row=>{
-  row.forEach(seat=>{
-    let div = document.createElement("div");
+ row.forEach(seat=>{
+   let div=document.createElement("div");
 
-    if(seat===null){
-      div.className="empty";
-    } else {
-      div.className="seat red";
-      div.innerText=seat;
+   if(seat===null){
+     div.className="empty";
+   } else {
+     div.className="seat red";
+     div.innerText=seat;
 
-      div.onclick=()=>{
-        selectedSeat=seat;
-        loadData();
-      };
-    }
-    container.appendChild(div);
-  });
+     div.onclick=()=>{
+       selectedSeat=seat;
+       loadData();
+     };
+   }
+   container.appendChild(div);
+ });
 });
 
-document.getElementById("paid").oninput = calcDue;
+/* CALCULATE DUE */
+paid.oninput=()=>{
+ let t=+total.value||0;
+ let p=+paid.value||0;
+ due.value=t-p;
+};
 
-function calcDue(){
-  let total = +document.getElementById("total").value || 0;
-  let paid = +document.getElementById("paid").value || 0;
-  document.getElementById("due").value = total - paid;
-}
-
+/* SAVE */
 function saveData(){
-  if(!selectedSeat){ alert("Select Seat"); return; }
+ if(!selectedSeat){ alert("Select Seat"); return; }
 
-  let obj = {
-    name: name.value,
-    father: father.value,
-    mobile: mobile.value,
-    aadhar: aadhar.value,
-    from: from.value,
-    to: to.value,
-    total: total.value,
-    paid: paid.value,
-    due: due.value
-  };
+ data[selectedSeat]={
+   name:name.value,
+   father:father.value,
+   mobile:mobile.value,
+   aadhar:aadhar.value,
+   from:from.value,
+   to:to.value,
+   total:total.value,
+   paid:paid.value,
+   due:due.value
+ };
 
-  data[selectedSeat] = obj;
-  updateColor(selectedSeat);
-  alert("Saved");
+ updateColor(selectedSeat);
+ generateReceipt();
 }
 
+/* LOAD */
 function loadData(){
-  let d = data[selectedSeat];
-  if(!d) return;
+ let d=data[selectedSeat];
+ if(!d) return;
 
-  name.value = d.name;
-  father.value = d.father;
-  mobile.value = d.mobile;
-  aadhar.value = d.aadhar;
-  from.value = d.from;
-  to.value = d.to;
-  total.value = d.total;
-  paid.value = d.paid;
-  due.value = d.due;
+ name.value=d.name;
+ father.value=d.father;
+ mobile.value=d.mobile;
+ aadhar.value=d.aadhar;
+ from.value=d.from;
+ to.value=d.to;
+ total.value=d.total;
+ paid.value=d.paid;
+ due.value=d.due;
+
+ generateReceipt();
 }
 
+/* COLOR SYSTEM */
 function updateColor(seat){
-  let all = document.querySelectorAll(".seat");
+ let today=new Date().toISOString().split('T')[0];
 
-  all.forEach(div=>{
-    if(div.innerText == seat){
-      let d = data[seat];
+ document.querySelectorAll(".seat").forEach(div=>{
+   if(div.innerText==seat){
+     let d=data[seat];
 
-      div.classList.remove("red","green","orange","sky");
+     div.classList.remove("red","green","orange","sky");
 
-      let today = new Date().toISOString().split('T')[0];
-
-      if(d.due == 0){
-        div.classList.add("green");
-      }
-      else if(d.to < today){
-        div.classList.add("sky");
-      }
-      else if(d.due > 0){
-        div.classList.add("orange");
-      }
-    }
-  });
+     if(d.due==0){
+       div.classList.add("green");
+     }
+     else if(d.to<today){
+       div.classList.add("sky");
+     }
+     else{
+       div.classList.add("orange");
+     }
+   }
+ });
 }
 
+/* RESET */
 function resetForm(){
-  document.getElementById("form").reset();
+ document.getElementById("form").reset();
 }
 
-function sendSMS(){
-  if(!mobile.value){ alert("Enter Mobile"); return; }
+/* RECEIPT FORMAT */
+function generateReceipt(){
+ let d=data[selectedSeat];
+ if(!d) return;
 
-  let msg = "Library Payment Done";
-  window.open(https://wa.me/91${mobile.value}?text=${msg});
+ document.getElementById("receipt").innerHTML=
+ <b>Library Receipt</b><br><br>
+ Seat No: ${selectedSeat}<br>
+ Name: ${d.name}<br>
+ Father: ${d.father}<br>
+ Mobile: ${d.mobile}<br>
+ Aadhar: ${d.aadhar}<br>
+ From: ${d.from}<br>
+ To: ${d.to}<br><br>
+ Total: ₹${d.total}<br>
+ Paid: ₹${d.paid}<br>
+ Due: ₹${d.due}<br>
+ ;
+}
+
+/* PRINT */
+function printReceipt(){
+ window.print();
 }
 </script>
 
