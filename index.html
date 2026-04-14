@@ -7,19 +7,6 @@
 <style>
 body { font-family: Arial; text-align: center; }
 
-.form-box {
-  border: 1px solid #ccc;
-  padding: 15px;
-  margin: 20px auto;
-  width: 320px;
-}
-
-input, select, button {
-  width: 95%;
-  padding: 8px;
-  margin: 5px;
-}
-
 .container {
   display: grid;
   grid-template-columns: repeat(8, 70px);
@@ -37,14 +24,6 @@ input, select, button {
 }
 
 .empty { visibility: hidden; }
-.active { border: 3px solid blue; }
-
-#details {
-  border: 2px solid black;
-  padding: 10px;
-  width: 300px;
-  margin: 10px auto;
-}
 </style>
 </head>
 
@@ -52,21 +31,8 @@ input, select, button {
 
 <h2>Wisdom Nest</h2>
 
-<div class="form-box">
-<input id="name" placeholder="Name">
-<input id="mobile" placeholder="Mobile">
-
-<input id="paid" type="number" placeholder="Paid">
-<input id="total" type="number" placeholder="Total">
-
-<input id="start" type="date">
-<input id="end" type="date">
-
-<button onclick="saveData()">Save / Update</button>
-<button onclick="resetForm()">Reset</button>
-</div>
-
-<div id="details">👉 Click seat</div>
+<input id="name" placeholder="Enter Name">
+<button onclick="saveData()">Save</button>
 
 <div class="container" id="seatBox"></div>
 
@@ -96,126 +62,54 @@ layout.forEach(row=>{
     }else{
       d.className="seat";
       d.dataset.seat=n;
-      d.onclick=()=>selectSeat(d,n);
+
+      d.onclick=()=>{
+        selectedSeat=n;
+        let d=JSON.parse(localStorage.getItem("seat_"+n));
+        name.value = d ? d.name : "";
+      };
     }
 
     box.appendChild(d);
   });
 });
 
-// select seat
-function selectSeat(div,num){
-  selectedSeat=num;
-
-  document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
-  div.classList.add("active");
-
-  let d=JSON.parse(localStorage.getItem("seat_"+num));
-
-  if(d){
-    name.value=d.name||"";
-    mobile.value=d.mobile||"";
-    paid.value=d.paid||"";
-    total.value=d.total||"";
-    start.value=d.start||"";
-    end.value=d.end||"";
-  }else{
-    resetForm();
-  }
-
-  showDetails();
-}
-
 // save
 function saveData(){
-  if(!selectedSeat) return alert("Select seat first");
+  if(!selectedSeat) return alert("Select seat");
   if(!name.value.trim()) return alert("Enter name");
 
-  let data={
-    name:name.value.trim(),
-    mobile:mobile.value||"",
-    paid:Number(paid.value||0),
-    total:Number(total.value||0),
-    start:start.value||"",
-    end:end.value||""
-  };
+  let data={ name:name.value.trim() };
 
   localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
 
   loadSeats();
-  showDetails();
 }
 
-// show details
-function showDetails(){
-  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
-
-  if(!d){
-    details.innerHTML="<b>Seat "+selectedSeat+"</b><br>Empty";
-    return;
-  }
-
-  let due=d.total-d.paid;
-
-  details.innerHTML=`
-  <b>Seat:</b> ${selectedSeat}<br>
-  <b>Name:</b> ${d.name}<br>
-  <b>Mobile:</b> ${d.mobile || "-"}<br>
-  <b>Paid:</b> ${d.paid} | Due: ${due}<br>
-  <b>Date:</b> ${d.start || "-"} → ${d.end || "-"}<br>
-  <button onclick="deleteData()">Reset</button>
-  `;
-}
-
-// delete
-function deleteData(){
-  localStorage.removeItem("seat_"+selectedSeat);
-  loadSeats();
-  details.innerHTML="Deleted";
-}
-
-// load seats (🔥 PERFECT FIX)
+// 🔥 MAIN FIX HERE
 function loadSeats(){
-  let today=new Date().toISOString().split('T')[0];
-
   document.querySelectorAll('.seat').forEach(s=>{
     let num=s.dataset.seat;
     let d=JSON.parse(localStorage.getItem("seat_"+num));
 
-    s.style.color="black";
-
     if(d && d.name){
-
-      let due=d.total-d.paid;
-
-      if(d.end && d.end<today){
-        s.style.background="skyblue";
-      }else if(due>0){
-        s.style.background="orange";
-      }else{
-        s.style.background="red";
-        s.style.color="white";
-      }
-
-      // 🔥 ONLY VALID NAME SHOW
+      // ✅ BOOKED → NAME SHOW
       s.innerHTML = `
         <div>${num}</div>
         <div style="font-size:10px;">${d.name}</div>
       `;
+      s.style.background="red";
+      s.style.color="white";
 
     }else{
-      s.innerHTML=num;
+      // ✅ EMPTY → ONLY NUMBER
+      s.innerHTML = num;
       s.style.background="lightgreen";
+      s.style.color="black";
     }
   });
 }
 
-// reset form
-function resetForm(){
-  document.querySelectorAll("input").forEach(i=>i.value="");
-}
-
-// load
 window.onload=loadSeats;
 </script>
 
