@@ -54,7 +54,6 @@ input, select, button {
 
 <div class="form-box">
 <input id="name" placeholder="Name">
-<input id="father" placeholder="Father Name">
 <input id="mobile" placeholder="Mobile">
 
 <input id="paid" type="number" placeholder="Paid">
@@ -62,21 +61,6 @@ input, select, button {
 
 <input id="start" type="date">
 <input id="end" type="date">
-
-<select id="payment">
-<option value="">Payment</option>
-<option>Online</option>
-<option>Cash</option>
-<option>Dew</option>
-</select>
-
-<select id="color">
-<option value="">Auto Color</option>
-<option value="lightgreen">Green</option>
-<option value="red">Red</option>
-<option value="orange">Orange</option>
-<option value="skyblue">Sky Blue</option>
-</select>
 
 <button onclick="saveData()">Save / Update</button>
 <button onclick="resetForm()">Reset</button>
@@ -112,7 +96,6 @@ layout.forEach(row=>{
     }else{
       d.className="seat";
       d.dataset.seat=n;
-
       d.onclick=()=>selectSeat(d,n);
     }
 
@@ -120,7 +103,7 @@ layout.forEach(row=>{
   });
 });
 
-// select
+// select seat
 function selectSeat(div,num){
   selectedSeat=num;
 
@@ -131,14 +114,11 @@ function selectSeat(div,num){
 
   if(d){
     name.value=d.name||"";
-    father.value=d.father||"";
     mobile.value=d.mobile||"";
     paid.value=d.paid||"";
     total.value=d.total||"";
     start.value=d.start||"";
     end.value=d.end||"";
-    payment.value=d.payment||"";
-    color.value=d.color||"";
   }else{
     resetForm();
   }
@@ -149,18 +129,15 @@ function selectSeat(div,num){
 // save
 function saveData(){
   if(!selectedSeat) return alert("Select seat first");
-  if(!name.value) return alert("Enter name");
+  if(!name.value.trim()) return alert("Enter name");
 
   let data={
     name:name.value.trim(),
-    father:father.value,
-    mobile:mobile.value,
+    mobile:mobile.value||"",
     paid:Number(paid.value||0),
     total:Number(total.value||0),
-    start:start.value,
-    end:end.value,
-    payment:payment.value,
-    color:color.value
+    start:start.value||"",
+    end:end.value||""
   };
 
   localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
@@ -174,7 +151,7 @@ function showDetails(){
   let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
 
   if(!d){
-    details.innerHTML="Seat "+selectedSeat+" Empty";
+    details.innerHTML="<b>Seat "+selectedSeat+"</b><br>Empty";
     return;
   }
 
@@ -183,9 +160,9 @@ function showDetails(){
   details.innerHTML=`
   <b>Seat:</b> ${selectedSeat}<br>
   <b>Name:</b> ${d.name}<br>
-  <b>Mobile:</b> ${d.mobile}<br>
+  <b>Mobile:</b> ${d.mobile || "-"}<br>
   <b>Paid:</b> ${d.paid} | Due: ${due}<br>
-  <b>Date:</b> ${d.start} → ${d.end}<br>
+  <b>Date:</b> ${d.start || "-"} → ${d.end || "-"}<br>
   <button onclick="deleteData()">Reset</button>
   `;
 }
@@ -197,7 +174,7 @@ function deleteData(){
   details.innerHTML="Deleted";
 }
 
-// load seats (🔥 NAME FIXED HERE)
+// load seats (🔥 PERFECT FIX)
 function loadSeats(){
   let today=new Date().toISOString().split('T')[0];
 
@@ -205,25 +182,22 @@ function loadSeats(){
     let num=s.dataset.seat;
     let d=JSON.parse(localStorage.getItem("seat_"+num));
 
-    if(d){
+    s.style.color="black";
 
-      // color
-      if(d.color){
-        s.style.background=d.color;
+    if(d && d.name){
+
+      let due=d.total-d.paid;
+
+      if(d.end && d.end<today){
+        s.style.background="skyblue";
+      }else if(due>0){
+        s.style.background="orange";
       }else{
-        let due=d.total-d.paid;
-
-        if(d.end && d.end<today){
-          s.style.background="skyblue";
-        }else if(due>0){
-          s.style.background="orange";
-        }else{
-          s.style.background="red";
-          s.style.color="white";
-        }
+        s.style.background="red";
+        s.style.color="white";
       }
 
-      // 🔥 NAME ALWAYS SHOW
+      // 🔥 ONLY VALID NAME SHOW
       s.innerHTML = `
         <div>${num}</div>
         <div style="font-size:10px;">${d.name}</div>
@@ -232,16 +206,16 @@ function loadSeats(){
     }else{
       s.innerHTML=num;
       s.style.background="lightgreen";
-      s.style.color="black";
     }
   });
 }
 
+// reset form
 function resetForm(){
   document.querySelectorAll("input").forEach(i=>i.value="");
-  color.value="";
 }
 
+// load
 window.onload=loadSeats;
 </script>
 
