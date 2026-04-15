@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <title>Library System</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <style>
 body{font-family:Arial;text-align:center;}
 
@@ -60,8 +58,6 @@ input,select,button{
 
 <div class="dashboard" id="statsBox"></div>
 
-<button onclick="monthlyPDF()">📄 Monthly PDF</button>
-
 <div>
 <input id="name" placeholder="Name">
 <input id="father" placeholder="Father">
@@ -90,7 +86,7 @@ input,select,button{
 
 let selectedSeat=null;
 
-// SAME 60 SEATS
+// 60 SEAT LAYOUT SAME
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -103,7 +99,7 @@ const layout=[
 [60,59,58,57,0,0,56,55]
 ];
 
-// CREATE
+// CREATE SEATS
 layout.forEach(r=>{
 r.forEach(n=>{
 let d=document.createElement("div");
@@ -127,7 +123,7 @@ box.appendChild(d);
 });
 });
 
-// 🔥 SAVE
+// SAVE
 function saveData(){
 
 if(!selectedSeat){
@@ -183,14 +179,16 @@ return;
 }
 
 details.innerHTML=`
-<b>Name:</b>${d.name}<br>
-<b>Father:</b>${d.father}<br>
-<b>Aadhar:</b>${d.aadhar}<br>
-<b>Mobile:</b>${d.mobile}<br>
-<b>From:</b>${d.start}<br>
-<b>To:</b>${d.end}<br>
-<b>Paid:</b>₹${d.paid}<br>
-<b>Due:</b>₹${d.due}<br>
+<b>Name:</b> ${d.name}<br>
+<b>Father:</b> ${d.father}<br>
+<b>Aadhar:</b> ${d.aadhar}<br>
+<b>Mobile:</b> ${d.mobile}<br><br>
+
+<b>From:</b> ${d.start}<br>
+<b>To:</b> ${d.end}<br><br>
+
+<b>Paid:</b> ₹${d.paid}<br>
+<b>Due:</b> ₹${d.due}<br><br>
 
 <button onclick="editSeat()">Edit</button>
 <button onclick="resetSeat()">Reset</button>
@@ -220,89 +218,54 @@ updateSeats();
 showDetails(selectedSeat);
 }
 
-// 🔥 FIXED COLOR SYSTEM (WORKING 100%)
+// 🔥 COLOR FIX FINAL WORKING
 function updateSeats(){
 
-let used=0,empty=0,paidT=0,dueT=0;
-
-let today=new Date().toISOString().split("T")[0];
+let today=new Date();
+today.setHours(0,0,0,0);
 
 document.querySelectorAll(".seat").forEach(s=>{
 let id=s.dataset.id;
 let d=JSON.parse(localStorage.getItem("seat_"+id));
 
 if(d && d.name){
-used++;
 
 let paid=Number(d.paid||0);
 let total=Number(d.total||0);
 let due=total-paid;
 
-paidT+=paid;
-dueT+=due;
+let endDate=d.end?new Date(d.end):null;
+if(endDate) endDate.setHours(0,0,0,0);
 
 s.innerHTML=id+"<br>"+d.name;
 
-// 🔥 FIXED PRIORITY COLOR
-if(d.end && d.end < today){
-s.style.background="skyblue";   // expired
+// RESET FIRST
+s.style.background="green";
+s.style.color="black";
+
+// SKY BLUE = EXPIRED
+if(endDate && endDate < today){
+s.style.background="skyblue";
 }
+// ORANGE = DUE
 else if(due > 0){
-s.style.background="orange";    // due
+s.style.background="orange";
 }
+// RED = PAID
 else{
-s.style.background="red";       // full paid
+s.style.background="red";
 }
 
 s.style.color="white";
 
 }else{
-empty++;
 s.innerHTML=id;
 s.style.background="green";
 s.style.color="black";
 }
 });
 
-statsBox.innerHTML=
-`Total:60 | Used:${used} | Empty:${empty}<br>
-Paid:₹${paidT} | Due:₹${dueT}`;
-}
-
-// 🔥 MONTHLY PDF
-function monthlyPDF(){
-
-const { jsPDF } = window.jspdf;
-let doc=new jsPDF();
-
-let m=new Date().getMonth();
-let y=new Date().getFullYear();
-
-let yPos=10;
-
-doc.text("Monthly Report",10,yPos);
-yPos+=10;
-
-for(let i=1;i<=60;i++){
-let d=JSON.parse(localStorage.getItem("seat_"+i));
-
-if(d && d.time){
-let dt=new Date(d.time);
-
-if(dt.getMonth()==m && dt.getFullYear()==y){
-
-doc.text(`Seat ${i} | ${d.name} | Paid ₹${d.paid} | Due ₹${d.due}`,10,yPos);
-yPos+=8;
-
-if(yPos>270){
-doc.addPage();
-yPos=10;
-}
-}
-}
-}
-
-doc.save("Monthly_Report.pdf");
+statsBox.innerHTML="60 Seats System Working";
 }
 
 updateSeats();
