@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Library Fixed System</title>
+<title>Library System Final</title>
 
 <style>
 body{font-family:Arial;text-align:center;}
@@ -54,16 +54,13 @@ input,select,button{
 
 <body>
 
-<h2>📚 Library System (FIXED SAVE)</h2>
+<h2>📚 Library System</h2>
 
 <div class="dashboard" id="statsBox"></div>
 
-<button onclick="monthlyReport()">Monthly Report</button>
-<button onclick="yearlyReport()">Yearly Report</button>
-
 <div>
 <input id="name" placeholder="Name">
-<input id="father" placeholder="Father">
+<input id="father" placeholder="Father Name">
 <input id="mobile" placeholder="Mobile">
 <input id="aadhar" placeholder="Aadhar">
 
@@ -76,7 +73,6 @@ input,select,button{
 <select id="payment">
 <option>Cash</option>
 <option>Online</option>
-<option>Due</option>
 </select>
 
 <button onclick="saveData()">SAVE</button>
@@ -90,7 +86,7 @@ input,select,button{
 
 let selectedSeat=null;
 
-// SAME 60 SEAT LAYOUT
+// 60 SEATS
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -103,7 +99,7 @@ const layout=[
 [60,59,58,57,0,0,56,55]
 ];
 
-// CREATE SEATS
+// CREATE
 layout.forEach(r=>{
 r.forEach(n=>{
 let d=document.createElement("div");
@@ -122,11 +118,12 @@ showDetails(n);
 updateSeats();
 };
 }
+
 box.appendChild(d);
 });
 });
 
-// 🔥 SAVE FIX (FINAL STABLE)
+// 🔥 SAVE FIX
 function saveData(){
 
 if(!selectedSeat){
@@ -134,78 +131,105 @@ alert("Seat select karo");
 return;
 }
 
-let n=document.getElementById("name").value.trim();
-
-if(n===""){
-alert("Name required");
-return;
-}
-
-let p=Number(document.getElementById("paid").value||0);
-let t=Number(document.getElementById("total").value||0);
-
 let data={
-name:n,
-father:document.getElementById("father").value||"",
-mobile:document.getElementById("mobile").value||"",
-aadhar:document.getElementById("aadhar").value||"",
-paid:p,
-total:t,
-start:document.getElementById("start").value||"",
-end:document.getElementById("end").value||"",
-payment:document.getElementById("payment").value||"Cash",
-due:t-p,
+name:name.value||"",
+father:father.value||"",
+mobile:mobile.value||"",
+aadhar:aadhar.value||"",
+paid:Number(paid.value||0),
+total:Number(total.value||0),
+start:start.value||"",
+end:end.value||"",
+payment:payment.value||"Cash",
+due:Number(total.value||0)-Number(paid.value||0),
 time:new Date().toISOString()
 };
 
-// SAFE SAVE
 localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
 
 loadData(selectedSeat);
 showDetails(selectedSeat);
 updateSeats();
 
-alert("Saved Successfully");
+alert("Saved");
 }
 
 // LOAD
 function loadData(i){
 let d=JSON.parse(localStorage.getItem("seat_"+i)||"{}");
 
-document.getElementById("name").value=d.name||"";
-document.getElementById("father").value=d.father||"";
-document.getElementById("mobile").value=d.mobile||"";
-document.getElementById("aadhar").value=d.aadhar||"";
-document.getElementById("paid").value=d.paid||"";
-document.getElementById("total").value=d.total||"";
-document.getElementById("start").value=d.start||"";
-document.getElementById("end").value=d.end||"";
-document.getElementById("payment").value=d.payment||"Cash";
+name.value=d.name||"";
+father.value=d.father||"";
+mobile.value=d.mobile||"";
+aadhar.value=d.aadhar||"";
+paid.value=d.paid||"";
+total.value=d.total||"";
+start.value=d.start||"";
+end.value=d.end||"";
+payment.value=d.payment||"Cash";
 }
 
-// DETAILS
+// DETAILS (Aadhar included)
 function showDetails(i){
 let d=JSON.parse(localStorage.getItem("seat_"+i));
 
 if(!d){
-document.getElementById("details").innerHTML="Empty Seat "+i;
+details.innerHTML="Empty Seat "+i;
 return;
 }
 
-document.getElementById("details").innerHTML=`
+details.innerHTML=`
+<b>Seat:</b>${i}<br><br>
 <b>Name:</b>${d.name}<br>
 <b>Father:</b>${d.father}<br>
 <b>Mobile:</b>${d.mobile}<br>
+<b>Aadhar:</b>${d.aadhar}<br><br>
 <b>Paid:</b>₹${d.paid}<br>
-<b>Due:</b>₹${d.due}<br>
-<b>Payment:</b>${d.payment}<br>
+<b>Total:</b>₹${d.total}<br>
+<b>Due:</b>₹${d.due}<br><br>
+
+<button onclick="editSeat()">Edit</button>
+<button onclick="resetSeat()">Reset</button>
 `;
+}
+
+// EDIT
+function editSeat(){
+let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
+
+name.value=d.name;
+father.value=d.father;
+mobile.value=d.mobile;
+aadhar.value=d.aadhar;
+paid.value=d.paid;
+total.value=d.total;
+start.value=d.start;
+end.value=d.end;
+payment.value=d.payment;
+}
+
+// RESET
+function resetSeat(){
+localStorage.removeItem("seat_"+selectedSeat);
+
+name.value="";
+father.value="";
+mobile.value="";
+aadhar.value="";
+paid.value="";
+total.value="";
+start.value="";
+end.value="";
+payment.value="Cash";
+
+updateSeats();
+showDetails(selectedSeat);
 }
 
 // DASHBOARD
 function updateSeats(){
 
-let used=0,empty=0,paidT=0,dueT=0,cash=0,online=0;
+let used=0,empty=0,paidT=0,dueT=0;
 
 document.querySelectorAll(".seat").forEach(s=>{
 let id=s.dataset.id;
@@ -214,15 +238,12 @@ let d=JSON.parse(localStorage.getItem("seat_"+id));
 if(d&&d.name){
 used++;
 s.innerHTML=id+"<br>"+d.name;
+s.style.background="red";
+s.style.color="white";
 
 paidT+=Number(d.paid||0);
 dueT+=Number(d.total-d.paid||0);
 
-if(d.payment==="Cash")cash+=Number(d.paid||0);
-if(d.payment==="Online")online+=Number(d.paid||0);
-
-s.style.background=(d.total-d.paid)>0?"orange":"red";
-s.style.color="white";
 }else{
 empty++;
 s.innerHTML=id;
@@ -231,40 +252,9 @@ s.style.color="black";
 }
 });
 
-document.getElementById("statsBox").innerHTML=
+statsBox.innerHTML=
 `Total:60 | Used:${used} | Empty:${empty}<br>
-Paid:₹${paidT} | Due:₹${dueT}<br>
-Cash:₹${cash} | Online:₹${online}`;
-}
-
-// MONTHLY
-function monthlyReport(){
-let m=new Date().getMonth();
-let txt="MONTHLY REPORT\n\n";
-
-for(let i=1;i<=60;i++){
-let d=JSON.parse(localStorage.getItem("seat_"+i));
-if(d&&new Date(d.time).getMonth()===m){
-txt+=`Seat ${i} | ${d.name} | ₹${d.paid}\n`;
-}
-}
-
-alert(txt);
-}
-
-// YEARLY
-function yearlyReport(){
-let y=new Date().getFullYear();
-let txt="YEARLY REPORT\n\n";
-
-for(let i=1;i<=60;i++){
-let d=JSON.parse(localStorage.getItem("seat_"+i));
-if(d&&new Date(d.time).getFullYear()===y){
-txt+=`Seat ${i} | ${d.name} | ₹${d.paid}\n`;
-}
-}
-
-alert(txt);
+Paid:₹${paidT} | Due:₹${dueT}`;
 }
 
 updateSeats();
