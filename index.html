@@ -26,14 +26,21 @@ body { font-family: Arial; text-align: center; }
 .seat{
   width:60px;
   height:60px;
-  font-size:10px;
+  font-size:9px;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
   border:1px solid black;
   cursor:pointer;
   background:green;
   color:black;
+}
+
+.seat button{
+  font-size:7px;
+  padding:1px;
+  margin:1px;
 }
 
 .empty{ visibility:hidden; }
@@ -92,10 +99,10 @@ input,select,button{
 
 <script>
 
-let selectedSeat = null;
+let selectedSeat=null;
 
-// 🔥 SAME SEATING
-const layout = [
+// SEATING
+const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
 [22,21,20,19,0,18,17,16],
@@ -117,7 +124,6 @@ layout.forEach(row=>{
     }else{
       div.className="seat";
       div.dataset.id=num;
-      div.innerText=num;
 
       div.onclick=()=>{
         selectedSeat=num;
@@ -131,70 +137,68 @@ layout.forEach(row=>{
   });
 });
 
-// 🔥 SAVE FIX (100% WORKING)
+// SAVE
 function saveData(){
-
-  if(selectedSeat == null){
+  if(!selectedSeat){
     alert("Seat select karo");
     return;
   }
 
-  let nameVal = document.getElementById("name").value.trim();
-  if(nameVal === ""){
-    alert("Name required");
-    return;
-  }
-
-  let paidVal = Number(document.getElementById("paid").value || 0);
-  let totalVal = Number(document.getElementById("total").value || 0);
-
-  let data = {
-    name: nameVal,
-    father: document.getElementById("father").value,
-    mobile: document.getElementById("mobile").value,
-    aadhar: document.getElementById("aadhar").value,
-    paid: paidVal,
-    total: totalVal,
-    start: document.getElementById("start").value,
-    end: document.getElementById("end").value,
-    payment: document.getElementById("payment").value,
-    due: totalVal - paidVal
+  let data={
+    name:name.value.trim(),
+    father:father.value,
+    mobile:mobile.value,
+    aadhar:aadhar.value,
+    paid:Number(paid.value||0),
+    total:Number(total.value||0),
+    start:start.value,
+    end:end.value,
+    payment:payment.value,
+    due:Number(total.value||0)-Number(paid.value||0)
   };
 
-  localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
+  localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
 
   loadData(selectedSeat);
   showDetails(selectedSeat);
   updateSeats();
-
-  alert("✅ Saved Successfully");
 }
 
 // LOAD
 function loadData(i){
-  let d = JSON.parse(localStorage.getItem("seat_" + i) || "{}");
+  let d=JSON.parse(localStorage.getItem("seat_"+i));
 
-  document.getElementById("name").value = d.name || "";
-  document.getElementById("father").value = d.father || "";
-  document.getElementById("mobile").value = d.mobile || "";
-  document.getElementById("aadhar").value = d.aadhar || "";
-  document.getElementById("paid").value = d.paid || "";
-  document.getElementById("total").value = d.total || "";
-  document.getElementById("start").value = d.start || "";
-  document.getElementById("end").value = d.end || "";
-  document.getElementById("payment").value = d.payment || "Cash";
+  if(d){
+    name.value=d.name||"";
+    father.value=d.father||"";
+    mobile.value=d.mobile||"";
+    aadhar.value=d.aadhar||"";
+    paid.value=d.paid||"";
+    total.value=d.total||"";
+    start.value=d.start||"";
+    end.value=d.end||"";
+  }else{
+    name.value="";
+    father.value="";
+    mobile.value="";
+    aadhar.value="";
+    paid.value="";
+    total.value="";
+    start.value="";
+    end.value="";
+  }
 }
 
-// SHOW DETAILS
+// SHOW DETAILS + BUTTONS
 function showDetails(i){
-  let d = JSON.parse(localStorage.getItem("seat_" + i));
+  let d=JSON.parse(localStorage.getItem("seat_"+i));
 
   if(!d){
-    details.innerHTML = "Empty Seat " + i;
+    details.innerHTML="Empty Seat "+i;
     return;
   }
 
-  details.innerHTML = `
+  details.innerHTML=`
   <b>Seat:</b> ${i}<br>
   <b>Name:</b> ${d.name}<br>
   <b>Father:</b> ${d.father}<br>
@@ -203,40 +207,62 @@ function showDetails(i){
   <b>Paid:</b> ₹${d.paid}<br>
   <b>Due:</b> ₹${d.due}<br>
   <b>Payment:</b> ${d.payment}<br>
-  <b>Date:</b> ${d.start} → ${d.end}
+  <b>Date:</b> ${d.start} → ${d.end}<br><br>
+
+  <button onclick="editSeat()">✏ Edit</button>
+  <button onclick="resetSeat()">🗑 Reset</button>
   `;
+}
+
+// EDIT
+function editSeat(){
+  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
+
+  if(!d) return;
+
+  name.value=d.name;
+  father.value=d.father;
+  mobile.value=d.mobile;
+  aadhar.value=d.aadhar;
+  paid.value=d.paid;
+  total.value=d.total;
+  start.value=d.start;
+  end.value=d.end;
+  payment.value=d.payment;
+}
+
+// RESET
+function resetSeat(){
+  localStorage.removeItem("seat_"+selectedSeat);
+  updateSeats();
+  details.innerHTML="Seat Reset Done";
 }
 
 // UPDATE SEATS + COLORS + DASHBOARD
 function updateSeats(){
 
   let used=0, empty=0;
-  let paid=0, due=0;
+  let paidTotal=0, dueTotal=0;
   let cash=0, online=0;
 
   document.querySelectorAll(".seat").forEach(seat=>{
     let id=seat.dataset.id;
-    let d=JSON.parse(localStorage.getItem("seat_" + id));
+    let d=JSON.parse(localStorage.getItem("seat_"+id));
 
     if(d && d.name){
       used++;
 
       seat.innerHTML=id+"<br>"+d.name;
 
-      let dval = d.total - d.paid;
+      let due=d.total-d.paid;
 
-      paid += d.paid;
-      due += dval;
+      paidTotal+=d.paid;
+      dueTotal+=due;
 
-      if(d.payment==="Cash") cash += d.paid;
-      if(d.payment==="Online") online += d.paid;
+      if(d.payment==="Cash") cash+=d.paid;
+      if(d.payment==="Online") online+=d.paid;
 
-      if(dval>0){
-        seat.style.background="orange";
-      }else{
-        seat.style.background="red";
-      }
-
+      seat.style.background=due>0?"orange":"red";
       seat.style.color="white";
 
     }else{
@@ -252,8 +278,8 @@ function updateSeats(){
   🟢 Used: ${used}<br>
   ⚪ Empty: ${empty}<br><br>
 
-  💰 Paid: ₹${paid}<br>
-  ❌ Due: ₹${due}<br><br>
+  💰 Paid: ₹${paidTotal}<br>
+  ❌ Due: ₹${dueTotal}<br><br>
 
   💵 Cash: ₹${cash}<br>
   📱 Online: ₹${online}
