@@ -5,14 +5,14 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<!-- FIREBASE -->
+<!-- 🔥 FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, setDoc, doc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_DOMAIN",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
   projectId: "YOUR_PROJECT_ID"
 };
 
@@ -25,49 +25,15 @@ window.fb = { setDoc, doc, getDocs, collection, deleteDoc };
 
 <style>
 body { font-family: Arial; text-align: center; }
-
-.dashboard {
-  background: black;
-  color: white;
-  padding: 10px;
-  margin: 10px;
-  border-radius: 10px;
-}
-
-#seats {
-  display: grid;
-  grid-template-columns: repeat(8, 100px);
-  gap: 8px;
-  justify-content: center;
-}
-
-.seat {
-  height: 90px;
-  background: green;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 11px;
-}
-
+.dashboard { background: black; color: white; padding: 10px; margin: 10px; border-radius: 10px; }
+#seats { display: grid; grid-template-columns: repeat(8, 100px); gap: 8px; justify-content: center; }
+.seat { height: 90px; background: green; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 11px; }
 .complete { background: red; }
 .due { background: orange; }
 .expired { background: skyblue; }
-
-#form, #details {
-  display: none;
-  background: #eee;
-  padding: 10px;
-  margin: 10px;
-  border-radius: 10px;
-}
-
+#form, #details { display: none; background: #eee; padding: 10px; margin: 10px; border-radius: 10px; }
 input, select { margin: 5px; padding: 5px; width: 90%; }
 button { margin: 5px; padding: 8px; }
-
 .empty { visibility: hidden; }
 </style>
 </head>
@@ -117,11 +83,11 @@ button { margin: 5px; padding: 8px; }
 </div>
 
 <script>
-let seatsDiv = document.getElementById("seats");
-let savedSeats = {};
-let currentSeat = null;
+let seatsDiv=document.getElementById("seats");
+let savedSeats={};
+let currentSeat=null;
 
-const layout = [
+const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
 [22,21,20,19,0,18,17,16],
@@ -133,11 +99,12 @@ const layout = [
 [60,59,58,57,0,0,56,55]
 ];
 
+// 🔥 LOAD ONLINE DATA
 async function loadData(){
-  savedSeats = {};
-  let snapshot = await fb.getDocs(fb.collection(db, "seats"));
-  snapshot.forEach(docSnap=>{
-    savedSeats[docSnap.id] = docSnap.data();
+  savedSeats={};
+  let snap=await fb.getDocs(fb.collection(db,"seats"));
+  snap.forEach(d=>{
+    savedSeats[d.id]=d.data();
   });
   renderSeats();
 }
@@ -190,6 +157,7 @@ function renderSeats(){
   updateDueList();
 }
 
+// SAVE ONLINE
 async function saveData(){
   let totalFee=Number(totalFeeInput.value);
   let paid=Number(paidInput.value);
@@ -278,7 +246,6 @@ dueList.appendChild(div);
 function downloadPDF(){
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF(),y=10;
-
 for(let i in savedSeats){
 let d=savedSeats[i];
 doc.text(`Seat ${i} ${d.name} ₹${d.paid}`,10,y);
@@ -315,6 +282,7 @@ let stats=document.getElementById("stats");
 let dueList=document.getElementById("dueList");
 let showData=document.getElementById("showData");
 
+// START
 loadData();
 </script>
 
