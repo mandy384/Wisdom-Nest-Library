@@ -56,7 +56,7 @@ button { margin: 5px; padding: 8px; }
 
 <body>
 
-<h2>📚 Library Ultimate Pro</h2>
+<h2>📚 Wisdom-Nest-Library</h2>
 
 <div class="dashboard">
 <p id="stats"></p>
@@ -191,13 +191,25 @@ function saveData(){
   renderSeats();
 }
 
-// ✅ SMS FUNCTION
+// 🔥 FINAL SMS FUNCTION
 function sendMsg(){
   let d = savedSeats[currentSeat];
 
-  let msg = `Hello ${d.name},
-Your library fee due is ₹${d.due}.
-Please pay soon.`;
+  let msg = `📚 Wisdom-Nest-Library
+
+प्रिय ${d.name},
+
+आपकी लाइब्रेरी फीस बकाया है।
+
+सीट नंबर: ${currentSeat}
+नाम: ${d.name}
+समय: ${d.from} से ${d.to}
+बाकी राशि: ₹${d.due}
+
+कृपया जल्द भुगतान करें।
+
+धन्यवाद 🙏
+Wisdom-Nest-Library`;
 
   window.location.href = `sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
 }
@@ -259,7 +271,7 @@ dueList.appendChild(div);
 }
 }
 
-// PDF SAME
+// PDF
 function downloadPDF(){
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF(),y=10;
@@ -272,9 +284,7 @@ y+=8;
 doc.save("report.pdf");
 }
 
-function monthlyReport(){
-downloadPDF();
-}
+function monthlyReport(){ downloadPDF(); }
 
 function downloadReceipt(){
 const { jsPDF } = window.jspdf;
