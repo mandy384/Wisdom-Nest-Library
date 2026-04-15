@@ -96,7 +96,7 @@ input,select,button{
 
 let selectedSeat=null;
 
-// 60 SEATS
+// 60 SEAT LAYOUT SAME
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -133,7 +133,7 @@ box.appendChild(d);
 });
 });
 
-// SAVE (FIXED)
+// 🔥 SAVE FIXED
 function saveData(){
 
 if(selectedSeat===null){
@@ -164,7 +164,7 @@ loadData(selectedSeat);
 showDetails(selectedSeat);
 updateSeats();
 
-alert("Saved");
+alert("Saved Successfully");
 }
 
 // LOAD
@@ -182,7 +182,7 @@ end.value=d.end||"";
 payment.value=d.payment||"Cash";
 }
 
-// SHOW + EDIT + RESET
+// FULL DETAILS
 function showDetails(i){
 let d=JSON.parse(localStorage.getItem("seat_"+i));
 
@@ -194,11 +194,20 @@ return;
 details.innerHTML=`
 <b>Seat:</b>${i}<br>
 <b>Name:</b>${d.name}<br>
+<b>Father:</b>${d.father}<br>
+<b>Mobile:</b>${d.mobile}<br>
+<b>Aadhar:</b>${d.aadhar}<br><br>
+
 <b>Paid:</b>₹${d.paid}<br>
+<b>Total:</b>₹${d.total}<br>
 <b>Due:</b>₹${d.due}<br><br>
 
-<button onclick="editSeat()">Edit</button>
-<button onclick="resetSeat()">Reset</button>
+<b>From:</b>${d.start}<br>
+<b>To:</b>${d.end}<br>
+<b>Payment:</b>${d.payment}<br><br>
+
+<button onclick="editSeat()">✏ Edit</button>
+<button onclick="resetSeat()">🗑 Reset</button>
 `;
 }
 
@@ -239,7 +248,7 @@ details.innerHTML="Reset Done";
 function updateSeats(){
 
 let used=0,empty=0;
-let paid=0,due=0,cash=0,online=0;
+let paidT=0,dueT=0,cash=0,online=0;
 
 document.querySelectorAll(".seat").forEach(s=>{
 let id=s.dataset.id;
@@ -249,11 +258,11 @@ if(d&&d.name){
 used++;
 s.innerHTML=id+"<br>"+d.name;
 
-paid+=d.paid;
-due+=d.total-d.paid;
+paidT+=Number(d.paid||0);
+dueT+=Number(d.total-d.paid||0);
 
-if(d.payment==="Cash")cash+=d.paid;
-if(d.payment==="Online")online+=d.paid;
+if(d.payment==="Cash")cash+=Number(d.paid||0);
+if(d.payment==="Online")online+=Number(d.paid||0);
 
 s.style.background=(d.total-d.paid)>0?"orange":"red";
 s.style.color="white";
@@ -268,38 +277,52 @@ s.style.color="black";
 
 statsBox.innerHTML=`
 Total Seats:60 | Used:${used} | Empty:${empty}<br>
-Paid:₹${paid} | Due:₹${due}<br>
+Paid:₹${paidT} | Due:₹${dueT}<br>
 Cash:₹${cash} | Online:₹${online}
 `;
 }
 
 // 📊 MONTHLY
 function monthlyReport(){
+
 let m=new Date().getMonth();
+let y=new Date().getFullYear();
+
 let txt="MONTHLY REPORT\n\n";
+let paid=0,due=0;
 
 for(let i=1;i<=60;i++){
 let d=JSON.parse(localStorage.getItem("seat_"+i));
-if(d&&new Date(d.time).getMonth()==m){
+
+if(d&&new Date(d.time).getMonth()===m && new Date(d.time).getFullYear()===y){
 txt+=`Seat ${i} | ${d.name} | ₹${d.paid}\n`;
+paid+=Number(d.paid||0);
+due+=Number(d.total-d.paid||0);
 }
 }
 
+txt+=`\nTotal Paid: ₹${paid}\nTotal Due: ₹${due}`;
 alert(txt);
 }
 
 // 📆 YEARLY
 function yearlyReport(){
+
 let y=new Date().getFullYear();
 let txt="YEARLY REPORT\n\n";
+let paid=0,due=0;
 
 for(let i=1;i<=60;i++){
 let d=JSON.parse(localStorage.getItem("seat_"+i));
-if(d&&new Date(d.time).getFullYear()==y){
+
+if(d&&new Date(d.time).getFullYear()===y){
 txt+=`Seat ${i} | ${d.name} | ₹${d.paid}\n`;
+paid+=Number(d.paid||0);
+due+=Number(d.total-d.paid||0);
 }
 }
 
+txt+=`\nTotal Paid: ₹${paid}\nTotal Due: ₹${due}`;
 alert(txt);
 }
 
