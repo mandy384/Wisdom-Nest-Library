@@ -5,6 +5,24 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, setDoc, doc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.db = db;
+window.fb = { setDoc, doc, getDocs, collection, deleteDoc };
+</script>
+
 <style>
 body { font-family: Arial; text-align: center; }
 
@@ -56,7 +74,7 @@ button { margin: 5px; padding: 8px; }
 
 <body>
 
-<h2>📚 Library Ultimate Pro</h2>
+<h2>📚 Library Ultimate Pro (Online)</h2>
 
 <div class="dashboard">
 <p id="stats"></p>
@@ -70,7 +88,6 @@ button { margin: 5px; padding: 8px; }
 
 <div id="seats"></div>
 
-<!-- FORM -->
 <div id="form">
 <input id="name" placeholder="Name">
 <input id="father" placeholder="Father Name">
@@ -91,7 +108,6 @@ button { margin: 5px; padding: 8px; }
 <button onclick="saveData()">Save</button>
 </div>
 
-<!-- DETAILS -->
 <div id="details">
 <pre id="showData"></pre>
 <button onclick="editData()">Edit</button>
@@ -102,10 +118,9 @@ button { margin: 5px; padding: 8px; }
 
 <script>
 let seatsDiv = document.getElementById("seats");
-let savedSeats = JSON.parse(localStorage.getItem("seats")) || {};
+let savedSeats = {};
 let currentSeat = null;
 
-// 🔥 SAME 60 SEAT FORMAT
 const layout = [
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -118,11 +133,19 @@ const layout = [
 [60,59,58,57,0,0,56,55]
 ];
 
-function renderSeats() {
-  seatsDiv.innerHTML = "";
+async function loadData(){
+  savedSeats = {};
+  let snapshot = await fb.getDocs(fb.collection(db, "seats"));
+  snapshot.forEach(docSnap=>{
+    savedSeats[docSnap.id] = docSnap.data();
+  });
+  renderSeats();
+}
 
+function renderSeats(){
+  seatsDiv.innerHTML="";
   let occupied=0,totalPaid=0,totalDue=0;
-  let today = new Date().toISOString().split("T")[0];
+  let today=new Date().toISOString().split("T")[0];
 
   layout.forEach(row=>{
     row.forEach(i=>{
@@ -135,7 +158,7 @@ function renderSeats() {
 
         if(savedSeats[i]){
           let d=savedSeats[i];
-          seat.innerHTML = i+"<br>"+d.name;
+          seat.innerHTML=i+"<br>"+d.name;
 
           if(d.to && d.to<today) seat.classList.add("expired");
           else if(d.due>0) seat.classList.add("due");
@@ -159,8 +182,7 @@ function renderSeats() {
     });
   });
 
-  stats.innerText=
-  "Seats: 60 | Occupied: "+occupied+
+  stats.innerText="Seats: 60 | Occupied: "+occupied+
   " | Empty: "+(60-occupied)+
   " | Paid: ₹"+totalPaid+
   " | Due: ₹"+totalDue;
@@ -168,12 +190,11 @@ function renderSeats() {
   updateDueList();
 }
 
-// SAVE
-function saveData(){
+async function saveData(){
   let totalFee=Number(totalFeeInput.value);
   let paid=Number(paidInput.value);
 
-  savedSeats[currentSeat]={
+  let data={
     name:name.value,
     father:father.value,
     mobile:mobile.value,
@@ -187,16 +208,21 @@ function saveData(){
     due:totalFee-paid
   };
 
-  localStorage.setItem("seats",JSON.stringify(savedSeats));
+  await fb.setDoc(fb.doc(db,"seats",String(currentSeat)),data);
   form.style.display="none";
-  renderSeats();
+  loadData();
 }
 
-// बाकी सब SAME (unchanged)
+async function deleteData(){
+  await fb.deleteDoc(fb.doc(db,"seats",String(currentSeat)));
+  details.style.display="none";
+  loadData();
+}
+
+// बाकी SAME
 function showDetails(i){
 let d=savedSeats[i];
-showData.innerText=
-`Seat: ${i}
+showData.innerText=`Seat: ${i}
 Name: ${d.name}
 Father: ${d.father}
 Mobile: ${d.mobile}
@@ -228,13 +254,6 @@ form.style.display="block";
 details.style.display="none";
 }
 
-function deleteData(){
-delete savedSeats[currentSeat];
-localStorage.setItem("seats",JSON.stringify(savedSeats));
-details.style.display="none";
-renderSeats();
-}
-
 function sendMsg(){
 let d=savedSeats[currentSeat];
 let msg=`Hello ${d.name}, Due ₹${d.due}`;
@@ -247,7 +266,6 @@ let today=new Date().toISOString().split("T")[0];
 
 for(let i in savedSeats){
 let d=savedSeats[i];
-
 if((d.to && d.to<today)||d.due>0){
 let div=document.createElement("div");
 div.innerText="Seat "+i+" | "+d.name+" | Due ₹"+d.due;
@@ -256,7 +274,7 @@ dueList.appendChild(div);
 }
 }
 
-// PDF functions SAME
+// PDF SAME
 function downloadPDF(){
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF(),y=10;
@@ -269,15 +287,12 @@ y+=8;
 doc.save("report.pdf");
 }
 
-function monthlyReport(){
-downloadPDF();
-}
+function monthlyReport(){ downloadPDF(); }
 
 function downloadReceipt(){
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF();
 let d=savedSeats[currentSeat];
-
 doc.text("Receipt",10,10);
 doc.text(d.name,10,20);
 doc.save("receipt.pdf");
@@ -300,7 +315,7 @@ let stats=document.getElementById("stats");
 let dueList=document.getElementById("dueList");
 let showData=document.getElementById("showData");
 
-renderSeats();
+loadData();
 </script>
 
 </body>
