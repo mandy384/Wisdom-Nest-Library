@@ -86,7 +86,7 @@ input,select,button{
 
 let selectedSeat=null;
 
-// 60 SEATS
+// SAME SEATING
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -123,7 +123,7 @@ box.appendChild(d);
 });
 });
 
-// 🔥 SAVE FIX
+// 🔥 SAVE FIXED
 function saveData(){
 
 if(!selectedSeat){
@@ -169,7 +169,7 @@ end.value=d.end||"";
 payment.value=d.payment||"Cash";
 }
 
-// DETAILS (Aadhar included)
+// 🔥 DETAILS (DATE FULL SHOW)
 function showDetails(i){
 let d=JSON.parse(localStorage.getItem("seat_"+i));
 
@@ -180,10 +180,15 @@ return;
 
 details.innerHTML=`
 <b>Seat:</b>${i}<br><br>
+
 <b>Name:</b>${d.name}<br>
 <b>Father:</b>${d.father}<br>
 <b>Mobile:</b>${d.mobile}<br>
 <b>Aadhar:</b>${d.aadhar}<br><br>
+
+<b>From:</b>${d.start || "-"}<br>
+<b>To:</b>${d.end || "-"}<br><br>
+
 <b>Paid:</b>₹${d.paid}<br>
 <b>Total:</b>₹${d.total}<br>
 <b>Due:</b>₹${d.due}<br><br>
@@ -226,10 +231,10 @@ updateSeats();
 showDetails(selectedSeat);
 }
 
-// DASHBOARD
+// 🔥 COLOR SYSTEM FIX
 function updateSeats(){
 
-let used=0,empty=0,paidT=0,dueT=0;
+let used=0,empty=0,due=0,paidT=0;
 
 document.querySelectorAll(".seat").forEach(s=>{
 let id=s.dataset.id;
@@ -237,12 +242,26 @@ let d=JSON.parse(localStorage.getItem("seat_"+id));
 
 if(d&&d.name){
 used++;
-s.innerHTML=id+"<br>"+d.name;
-s.style.background="red";
-s.style.color="white";
 
-paidT+=Number(d.paid||0);
-dueT+=Number(d.total-d.paid||0);
+let dval = Number(d.total - d.paid);
+
+paidT += Number(d.paid||0);
+due += dval;
+
+s.innerHTML=id+"<br>"+d.name;
+
+// 🔥 COLOR LOGIC (FIXED)
+if(d.to && d.to < new Date().toISOString().split("T")[0]){
+s.style.background="skyblue";   // date expired
+}
+else if(dval > 0){
+s.style.background="orange";    // due
+}
+else{
+s.style.background="red";       // paid complete
+}
+
+s.style.color="white";
 
 }else{
 empty++;
@@ -254,7 +273,7 @@ s.style.color="black";
 
 statsBox.innerHTML=
 `Total:60 | Used:${used} | Empty:${empty}<br>
-Paid:₹${paidT} | Due:₹${dueT}`;
+Paid:₹${paidT} | Due:₹${due}`;
 }
 
 updateSeats();
