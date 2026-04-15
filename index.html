@@ -1,243 +1,319 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Ultra Pro Library System</title>
+<title>Library Ultimate Pro</title>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{
-font-family:Arial;
-text-align:center;
-background:#f2f2f2;
+body { font-family: Arial; text-align: center; }
+
+.dashboard {
+  background: black;
+  color: white;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
 }
 
-h2{margin:10px;}
-
-#stats{
-background:black;
-color:white;
-padding:10px;
-margin:10px;
-border-radius:10px;
+#seats {
+  display: grid;
+  grid-template-columns: repeat(8, 100px);
+  gap: 8px;
+  justify-content: center;
 }
 
-#seats{
-display:grid;
-grid-template-columns:repeat(8,90px);
-gap:6px;
-justify-content:center;
-margin-top:10px;
+.seat {
+  height: 90px;
+  background: green;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 11px;
 }
 
-.seat{
-height:80px;
-background:green;
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
-border-radius:6px;
-cursor:pointer;
-font-size:12px;
+.complete { background: red; }
+.due { background: orange; }
+.expired { background: skyblue; }
+
+#form, #details {
+  display: none;
+  background: #eee;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
 }
 
-.empty{visibility:hidden;}
+input, select { margin: 5px; padding: 5px; width: 90%; }
+button { margin: 5px; padding: 8px; }
 
-.due{background:orange;}
-.expired{background:skyblue;}
-.full{background:red;}
-
-#form,#panel{
-display:none;
-background:white;
-padding:10px;
-margin:10px;
-border-radius:10px;
-}
-
-input{
-width:90%;
-margin:5px;
-padding:6px;
-}
-
-button{
-margin:5px;
-padding:7px;
-cursor:pointer;
-}
+.empty { visibility: hidden; }
 </style>
 </head>
 
 <body>
 
-<h2>📚 ULTRA PRO LIBRARY SYSTEM (ONLINE)</h2>
+<h2>📚 Wisdom-Nest-Library</h2>
 
-<div id="stats"></div>
+<div class="dashboard">
+<p id="stats"></p>
+</div>
+
+<button onclick="downloadPDF()">📄 Full Report</button>
+<button onclick="monthlyReport()">📊 Monthly Report</button>
+
+<h3>⚠️ Due / Expired</h3>
+<div id="dueList"></div>
 
 <div id="seats"></div>
 
 <!-- FORM -->
 <div id="form">
-<h3>Add / Edit Student</h3>
-
 <input id="name" placeholder="Name">
+<input id="father" placeholder="Father Name">
 <input id="mobile" placeholder="Mobile">
-<input id="fee" placeholder="Total Fee">
+<input id="adhar" placeholder="Aadhar">
+<input id="shift" placeholder="Shift">
+<input id="from" type="date">
+<input id="to" type="date">
+
+<select id="payment">
+<option>Cash</option>
+<option>Online</option>
+</select>
+
+<input id="totalFee" placeholder="Total Fee">
 <input id="paid" placeholder="Paid">
 
 <button onclick="saveData()">Save</button>
 </div>
 
-<!-- PANEL -->
-<div id="panel">
-<pre id="info"></pre>
-
-<button onclick="deleteData()">Delete</button>
-<button onclick="closePanel()">Close</button>
+<!-- DETAILS -->
+<div id="details">
+<pre id="showData"></pre>
+<button onclick="editData()">Edit</button>
+<button onclick="deleteData()">Reset</button>
+<button onclick="sendMsg()">📩 SMS Reminder</button>
+<button onclick="downloadReceipt()">🧾 Receipt</button>
 </div>
 
 <script>
-
-// ================= FIREBASE =================
-const firebaseConfig = {
-  apiKey: "AIzaSyCW-Tm3omcmCbcfbutyC56PuMRa8KEyb8s",
-  authDomain: "wisdom-nest-library-daff9.firebaseapp.com",
-  databaseURL: "https://wisdom-nest-library-daff9-default-rtdb.firebaseio.com",
-  projectId: "wisdom-nest-library-daff9",
-  storageBucket: "wisdom-nest-library-daff9.appspot.com",
-  messagingSenderId: "28096760153",
-  appId: "1:28096760153:web:a016a73e7347c95f8ce448"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// ================= DATA =================
-let data = {};
+let seatsDiv = document.getElementById("seats");
+let savedSeats = JSON.parse(localStorage.getItem("seats")) || {};
 let currentSeat = null;
 
-// ================= LAYOUT =================
 const layout = [
-[1,2,3,4,5,6,7,8],
+[8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
-[16,17,18,19,0,20,21,22],
-[23,24,25,26,0,27,28,29],
-[30,31,32,33,0,34,35,36],
-[37,38,39,40,0,41,42,43],
-[44,45,46,47,0,48,49,50],
-[51,52,53,54,0,55,56,57]
+[22,21,20,19,0,18,17,16],
+[23,24,25,0,0,26,27,28],
+[35,34,33,32,0,31,30,29],
+[36,37,38,39,0,40,41,42],
+[48,47,46,0,0,45,44,43],
+[49,50,51,0,0,52,53,54],
+[60,59,58,57,0,0,56,55]
 ];
 
-// ================= REAL TIME LOAD =================
-db.ref("seats").on("value", snap=>{
-data = snap.val() || {};
-draw();
-});
+function renderSeats() {
+  seatsDiv.innerHTML = "";
 
-// ================= DRAW =================
-function draw(){
-let seats=document.getElementById("seats");
-let stats=document.getElementById("stats");
+  let occupied=0,totalPaid=0,totalDue=0;
+  let today = new Date().toISOString().split("T")[0];
 
-seats.innerHTML="";
+  layout.forEach(row=>{
+    row.forEach(i=>{
+      let seat=document.createElement("div");
 
-let occupied=0;
-let totalPaid=0;
-let totalDue=0;
+      if(i===0){
+        seat.className="empty";
+      }else{
+        seat.className="seat";
 
-layout.forEach(row=>{
-row.forEach(i=>{
-let d=document.createElement("div");
+        if(savedSeats[i]){
+          let d=savedSeats[i];
+          seat.innerHTML = i+"<br>"+d.name;
 
-if(i===0){
-d.className="empty";
-}else{
-d.className="seat";
+          if(d.to && d.to<today) seat.classList.add("expired");
+          else if(d.due>0) seat.classList.add("due");
+          else seat.classList.add("complete");
 
-if(data[i]){
-let s=data[i];
-d.innerHTML=i+"<br>"+s.name;
+          occupied++;
+          totalPaid+=Number(d.paid||0);
+          totalDue+=Number(d.due||0);
+        }else{
+          seat.innerText="Seat "+i;
+        }
 
-let due = Number(s.fee||0)-Number(s.paid||0);
+        seat.onclick=()=>{
+          currentSeat=i;
+          if(savedSeats[i]) showDetails(i);
+          else form.style.display="block";
+        };
+      }
 
-if(due>0) d.classList.add("due");
-else d.classList.add("full");
+      seatsDiv.appendChild(seat);
+    });
+  });
 
-occupied++;
-totalPaid += Number(s.paid||0);
-totalDue += due;
-}else{
-d.innerText="Seat "+i;
+  stats.innerText=
+  "Seats: 60 | Occupied: "+occupied+
+  " | Empty: "+(60-occupied)+
+  " | Paid: ₹"+totalPaid+
+  " | Due: ₹"+totalDue;
+
+  updateDueList();
 }
 
-d.onclick=()=>{
-currentSeat=i;
-
-if(data[i]){
-showPanel(i);
-}else{
-form.style.display="block";
-}
-};
-}
-
-seats.appendChild(d);
-});
-});
-
-stats.innerHTML=
-"Occupied: "+occupied+
-" | Empty: "+(60-occupied)+
-" | Paid: ₹"+totalPaid+
-" | Due: ₹"+totalDue;
-}
-
-// ================= SAVE =================
+// SAVE
 function saveData(){
+  let totalFee=Number(totalFeeInput.value);
+  let paid=Number(paidInput.value);
 
-let obj={
-name:name.value,
-mobile:mobile.value,
-fee:Number(fee.value),
-paid:Number(paid.value||0)
-};
+  savedSeats[currentSeat]={
+    name:name.value,
+    father:father.value,
+    mobile:mobile.value,
+    adhar:adhar.value,
+    shift:shift.value,
+    from:from.value,
+    to:to.value,
+    payment:payment.value,
+    totalFee,
+    paid,
+    due:totalFee-paid
+  };
 
-db.ref("seats/"+currentSeat).set(obj);
+  localStorage.setItem("seats",JSON.stringify(savedSeats));
+  form.style.display="none";
+  renderSeats();
+}
 
+// 🔥 FINAL SMS FUNCTION
+function sendMsg(){
+  let d = savedSeats[currentSeat];
+
+  let msg = `📚 Wisdom-Nest-Library
+
+प्रिय ${d.name},
+
+आपकी लाइब्रेरी फीस बकाया है।
+
+सीट नंबर: ${currentSeat}
+नाम: ${d.name}
+समय: ${d.from} से ${d.to}
+बाकी राशि: ₹${d.due}
+
+कृपया जल्द भुगतान करें।
+
+धन्यवाद 🙏
+Wisdom-Nest-Library`;
+
+  window.location.href = `sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
+}
+
+// बाकी SAME
+function showDetails(i){
+let d=savedSeats[i];
+showData.innerText=`Seat: ${i}
+Name: ${d.name}
+Father: ${d.father}
+Mobile: ${d.mobile}
+Aadhar: ${d.adhar}
+Shift: ${d.shift}
+From: ${d.from}
+To: ${d.to}
+Payment: ${d.payment}
+Total: ₹${d.totalFee}
+Paid: ₹${d.paid}
+Due: ₹${d.due}`;
+details.style.display="block";
 form.style.display="none";
 }
 
-// ================= SHOW =================
-function showPanel(i){
-let s=data[i];
-let due = Number(s.fee||0)-Number(s.paid||0);
-
-document.getElementById("info").innerText=
-"Seat: "+i+
-"\nName: "+s.name+
-"\nMobile: "+s.mobile+
-"\nFee: "+s.fee+
-"\nPaid: "+s.paid+
-"\nDue: "+due;
-
-panel.style.display="block";
-form.style.display="none";
+function editData(){
+let d=savedSeats[currentSeat];
+name.value=d.name;
+father.value=d.father;
+mobile.value=d.mobile;
+adhar.value=d.adhar;
+shift.value=d.shift;
+from.value=d.from;
+to.value=d.to;
+payment.value=d.payment;
+totalFeeInput.value=d.totalFee;
+paidInput.value=d.paid;
+form.style.display="block";
+details.style.display="none";
 }
 
-// ================= DELETE =================
 function deleteData(){
-db.ref("seats/"+currentSeat).remove();
-panel.style.display="none";
+delete savedSeats[currentSeat];
+localStorage.setItem("seats",JSON.stringify(savedSeats));
+details.style.display="none";
+renderSeats();
 }
 
-// ================= CLOSE =================
-function closePanel(){
-panel.style.display="none";
+function updateDueList(){
+dueList.innerHTML="";
+let today=new Date().toISOString().split("T")[0];
+
+for(let i in savedSeats){
+let d=savedSeats[i];
+
+if((d.to && d.to<today)||d.due>0){
+let div=document.createElement("div");
+div.innerText="Seat "+i+" | "+d.name+" | Due ₹"+d.due;
+dueList.appendChild(div);
+}
+}
 }
 
+// PDF
+function downloadPDF(){
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF(),y=10;
+
+for(let i in savedSeats){
+let d=savedSeats[i];
+doc.text(`Seat ${i} ${d.name} ₹${d.paid}`,10,y);
+y+=8;
+}
+doc.save("report.pdf");
+}
+
+function monthlyReport(){ downloadPDF(); }
+
+function downloadReceipt(){
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF();
+let d=savedSeats[currentSeat];
+
+doc.text("Receipt",10,10);
+doc.text(d.name,10,20);
+doc.save("receipt.pdf");
+}
+
+// refs
+let name=document.getElementById("name");
+let father=document.getElementById("father");
+let mobile=document.getElementById("mobile");
+let adhar=document.getElementById("adhar");
+let shift=document.getElementById("shift");
+let from=document.getElementById("from");
+let to=document.getElementById("to");
+let payment=document.getElementById("payment");
+let totalFeeInput=document.getElementById("totalFee");
+let paidInput=document.getElementById("paid");
+let form=document.getElementById("form");
+let details=document.getElementById("details");
+let stats=document.getElementById("stats");
+let dueList=document.getElementById("dueList");
+let showData=document.getElementById("showData");
+
+renderSeats();
 </script>
 
 </body>
