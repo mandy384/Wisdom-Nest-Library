@@ -2,157 +2,119 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Wisdom Nest Library Pro</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<title>Library System Pro</title>
 
 <style>
 body { font-family: Arial; text-align: center; }
 
-.dashboard {
-  background: black;
-  color: white;
-  padding: 10px;
-  margin: 10px;
-  border-radius: 10px;
+.container{
+  display:grid;
+  grid-template-columns: repeat(8,60px);
+  gap:10px;
+  justify-content:center;
 }
 
-.container {
-  display: grid;
-  grid-template-columns: repeat(8, 60px);
-  gap: 10px;
-  justify-content: center;
+.seat{
+  width:60px;
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  cursor:pointer;
+  border:1px solid #000;
+  background:green;
+  color:black;
 }
 
-.seat {
-  border: 1px solid black;
-  padding: 4px;
-  font-size: 10px;
-  height: 65px;
-  cursor: pointer;
-  background: lightgreen;
+.form-box{
+  margin:15px auto;
+  width:300px;
 }
 
-.empty { visibility: hidden; }
-.active { border: 3px solid blue; }
-
-.complete { background: red !important; color: white; }
-.due { background: orange !important; }
-.expired { background: skyblue !important; }
-
-.form-box {
-  border: 1px solid #ccc;
-  padding: 10px;
-  width: 330px;
-  margin: 20px auto;
+input,button{
+  width:95%;
+  margin:4px;
+  padding:6px;
 }
 
-input, select, button {
-  width: 95%;
-  padding: 6px;
-  margin: 4px;
-}
-
-#saveBtn {
-  background: green;
-  color: white;
-  border: none;
-}
-
-#details {
-  border: 2px solid black;
-  padding: 10px;
-  width: 330px;
-  margin: 10px auto;
-  text-align: left;
+#details{
+  margin:10px auto;
+  width:300px;
+  border:1px solid #000;
+  padding:10px;
+  text-align:left;
 }
 </style>
 </head>
 
 <body>
 
-<h2>📚 Wisdom Nest Library Pro</h2>
-
-<div class="dashboard">
-  <p id="stats"></p>
-</div>
-
-<div id="dueList"></div>
+<h2>📚 Library System</h2>
 
 <div class="form-box">
 <input id="name" placeholder="Name">
 <input id="father" placeholder="Father Name">
-<input id="mobile" placeholder="Mobile Number">
-<input id="aadhar" placeholder="Aadhar Number">
+<input id="mobile" placeholder="Mobile">
+<input id="aadhar" placeholder="Aadhar">
 
-<input id="paid" type="number" placeholder="Paid Amount">
-<input id="total" type="number" placeholder="Total Amount">
+<input id="paid" placeholder="Paid">
+<input id="total" placeholder="Total">
 
 <input id="start" type="date">
 <input id="end" type="date">
 
-<select id="payment">
-<option value="">Payment Mode</option>
-<option>Online</option>
-<option>Cash</option>
-<option>Due</option>
-</select>
-
-<button id="saveBtn" onclick="saveData()">Save / Update</button>
-<button onclick="resetForm()">Reset Form</button>
+<button onclick="saveData()">Save</button>
 </div>
 
-<div id="details">👉 Click seat</div>
+<div id="details">Click seat</div>
 
 <div class="container" id="box"></div>
 
 <script>
 
-let selectedSeat = null;
+let selectedSeat=null;
 
-const layout = [
-[8,7,6,5,4,3,2,1],
-[9,10,11,12,0,13,14,15],
-[22,21,20,19,0,18,17,16],
-[23,24,25,0,0,26,27,28],
-[35,34,33,32,0,31,30,29],
-[36,37,38,39,0,40,41,42],
-[48,47,46,0,0,45,44,43],
-[49,50,51,0,0,52,53,54],
-[60,59,58,57,0,0,56,55]
-];
+// create 64 seats
+for(let i=1;i<=64;i++){
+  let div=document.createElement("div");
+  div.className="seat";
+  div.dataset.id=i;
+  div.innerText=i;
 
-// create seats (SAME LAYOUT)
-layout.forEach(row=>{
-  row.forEach(num=>{
-    let div=document.createElement("div");
+  div.onclick=()=>{
+    selectedSeat=i;
+    loadData(i);
+    showDetails(i);
+  };
 
-    if(num===0){
-      div.className="empty";
-    } else {
-      div.className="seat";
-      div.dataset.seat=num;
+  box.appendChild(div);
+}
 
-      div.onclick=function(){
-        selectedSeat=num;
+// SAVE
+function saveData(){
+  if(!selectedSeat) return alert("Seat select karo");
 
-        document.querySelectorAll('.seat')
-        .forEach(s=>s.classList.remove("active"));
+  let data={
+    name:name.value.trim(),
+    father:father.value,
+    mobile:mobile.value,
+    aadhar:aadhar.value,
+    paid:Number(paid.value||0),
+    total:Number(total.value||0),
+    start:start.value,
+    end:end.value,
+    due:Number(total.value||0)-Number(paid.value||0)
+  };
 
-        this.classList.add("active");
+  localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
 
-        loadForm();
-        showDetails();
-      };
-    }
-
-    box.appendChild(div);
-  });
-});
+  updateSeats();
+}
 
 // LOAD FORM
-function loadForm(){
-  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
+function loadData(i){
+  let d=JSON.parse(localStorage.getItem("seat_"+i));
 
   if(d){
     name.value=d.name||"";
@@ -163,123 +125,76 @@ function loadForm(){
     total.value=d.total||"";
     start.value=d.start||"";
     end.value=d.end||"";
-    payment.value=d.payment||"";
-  } else {
-    resetForm();
+  }else{
+    name.value="";
+    father.value="";
+    mobile.value="";
+    aadhar.value="";
+    paid.value="";
+    total.value="";
+    start.value="";
+    end.value="";
   }
-}
-
-// SAVE
-function saveData(){
-  if(!selectedSeat){
-    alert("Seat select karo");
-    return;
-  }
-
-  let data = {
-    name: name.value,
-    father: father.value,
-    mobile: mobile.value,
-    aadhar: aadhar.value,
-    paid: Number(paid.value||0),
-    total: Number(total.value||0),
-    start: start.value,
-    end: end.value,
-    payment: payment.value,
-    due: Number(total.value||0) - Number(paid.value||0)
-  };
-
-  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
-
-  loadSeats();
-  showDetails();
-  updateStats();
 }
 
 // SHOW DETAILS
-function showDetails(){
-  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
+function showDetails(i){
+  let d=JSON.parse(localStorage.getItem("seat_"+i));
 
   if(!d){
-    details.innerHTML="Empty Seat";
+    details.innerHTML="Empty Seat "+i;
     return;
   }
 
   details.innerHTML=`
-  <b>Seat:</b> ${selectedSeat}<br>
+  <b>Seat:</b> ${i}<br>
   <b>Name:</b> ${d.name}<br>
   <b>Father:</b> ${d.father}<br>
   <b>Mobile:</b> ${d.mobile}<br>
   <b>Aadhar:</b> ${d.aadhar}<br>
   <b>Paid:</b> ₹${d.paid}<br>
   <b>Due:</b> ₹${d.due}<br>
-  <b>Payment:</b> ${d.payment}<br>
-  <b>Date:</b> ${d.start} → ${d.end}<br>
-
-  <button onclick="deleteData()">Reset</button>
+  <b>Date:</b> ${d.start} → ${d.end}
   `;
 }
 
-// DELETE
-function deleteData(){
-  localStorage.removeItem("seat_"+selectedSeat);
-  loadSeats();
-  updateStats();
-  details.innerHTML="Deleted";
-}
+// COLOR + NAME UPDATE
+function updateSeats(){
 
-// LOAD SEATS
-function loadSeats(){
-  document.querySelectorAll('.seat').forEach(s=>{
-    let num=s.dataset.seat;
-    let d=JSON.parse(localStorage.getItem("seat_"+num));
+  let today=new Date().toISOString().split("T")[0];
 
-    let today=new Date().toISOString().split("T")[0];
+  document.querySelectorAll(".seat").forEach(seat=>{
+    let id=seat.dataset.id;
+    let d=JSON.parse(localStorage.getItem("seat_"+id));
 
     if(d && d.name){
-      s.innerHTML=num+"<br>"+d.name;
 
-      s.classList.remove("due","expired","complete");
+      seat.innerHTML=id+"<br>"+d.name;
 
-      if(d.end && d.end < today) s.classList.add("expired");
-      else if(d.due>0) s.classList.add("due");
-      else s.classList.add("complete");
-    } else {
-      s.innerHTML=num;
-      s.classList.remove("due","expired","complete");
+      let due=d.total-d.paid;
+
+      if(d.end && d.end<today){
+        seat.style.background="skyblue"; // date expired
+      }
+      else if(due>0){
+        seat.style.background="orange"; // due payment
+      }
+      else{
+        seat.style.background="red"; // booked
+      }
+
+      seat.style.color="white";
+
+    }else{
+      seat.innerHTML=id;
+      seat.style.background="green"; // empty
+      seat.style.color="black";
     }
   });
 }
 
-// STATS
-function updateStats(){
-  let totalSeats=64;
-  let used=0, paid=0, due=0;
-
-  for(let i=1;i<=64;i++){
-    let d=JSON.parse(localStorage.getItem("seat_"+i));
-    if(d){
-      used++;
-      paid+=d.paid||0;
-      due+=d.due||0;
-    }
-  }
-
-  stats.innerText=
-  `Seats: ${totalSeats} | Used: ${used} | Empty: ${totalSeats-used} | Paid: ₹${paid} | Due: ₹${due}`;
-}
-
-// RESET FORM
-function resetForm(){
-  document.querySelectorAll("input").forEach(i=>i.value="");
-  payment.value="";
-}
-
 // INIT
-window.onload=()=>{
-  loadSeats();
-  updateStats();
-};
+updateSeats();
 
 </script>
 
