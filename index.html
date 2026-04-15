@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Library System</title>
+<title>Library Final System</title>
 
 <style>
 body{font-family:Arial;text-align:center;}
@@ -86,7 +86,7 @@ input,select,button{
 
 let selectedSeat=null;
 
-// 60 SEAT LAYOUT SAME
+// 60 SEATS
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -122,7 +122,7 @@ updateSeats();
 box.appendChild(d);
 });
 });
-
+ 
 // SAVE
 function saveData(){
 
@@ -179,19 +179,18 @@ return;
 }
 
 details.innerHTML=`
-<b>Name:</b> ${d.name}<br>
-<b>Father:</b> ${d.father}<br>
-<b>Aadhar:</b> ${d.aadhar}<br>
-<b>Mobile:</b> ${d.mobile}<br><br>
-
-<b>From:</b> ${d.start}<br>
-<b>To:</b> ${d.end}<br><br>
-
-<b>Paid:</b> ₹${d.paid}<br>
-<b>Due:</b> ₹${d.due}<br><br>
+<b>Name:</b>${d.name}<br>
+<b>Father:</b>${d.father}<br>
+<b>Aadhar:</b>${d.aadhar}<br>
+<b>Mobile:</b>${d.mobile}<br>
+<b>From:</b>${d.start}<br>
+<b>To:</b>${d.end}<br>
+<b>Paid:</b>₹${d.paid}<br>
+<b>Due:</b>₹${d.due}<br><br>
 
 <button onclick="editSeat()">Edit</button>
 <button onclick="resetSeat()">Reset</button>
+<button onclick="sendReminder()">Reminder</button>
 `;
 }
 
@@ -213,12 +212,11 @@ payment.value=d.payment;
 // RESET
 function resetSeat(){
 localStorage.removeItem("seat_"+selectedSeat);
-
 updateSeats();
 showDetails(selectedSeat);
 }
 
-// 🔥 COLOR FIX FINAL WORKING
+// 🔥 COLOR FIX
 function updateSeats(){
 
 let today=new Date();
@@ -239,16 +237,16 @@ if(endDate) endDate.setHours(0,0,0,0);
 
 s.innerHTML=id+"<br>"+d.name;
 
-// RESET FIRST
+// RESET
 s.style.background="green";
 s.style.color="black";
 
-// SKY BLUE = EXPIRED
+// SKY = DATE EXPIRED
 if(endDate && endDate < today){
 s.style.background="skyblue";
 }
 // ORANGE = DUE
-else if(due > 0){
+else if(due>0){
 s.style.background="orange";
 }
 // RED = PAID
@@ -264,8 +262,18 @@ s.style.background="green";
 s.style.color="black";
 }
 });
+}
 
-statsBox.innerHTML="60 Seats System Working";
+// 📩 REMINDER
+function sendReminder(){
+
+let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
+
+if(!d)return;
+
+let msg=`Hello ${d.name}, Your due is ₹${d.due}. Please pay soon.`;
+
+window.open("https://wa.me/91"+d.mobile+"?text="+encodeURIComponent(msg));
 }
 
 updateSeats();
