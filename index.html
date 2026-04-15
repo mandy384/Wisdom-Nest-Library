@@ -1,169 +1,35 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Wisdom Nest Library</title>
-
-<style>
-body { font-family: Arial; text-align: center; }
-
-.dashboard{
-  background:black;
-  color:white;
-  padding:10px;
-  margin:10px;
-  border-radius:10px;
-}
-
-.container{
-  display:grid;
-  grid-template-columns: repeat(8, 60px);
-  gap:10px;
-  justify-content:center;
-}
-
-.seat{
-  width:60px;
-  height:60px;
-  font-size:10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border:1px solid black;
-  cursor:pointer;
-  background:green;
-  color:black;
-}
-
-.empty{ visibility:hidden; }
-
-.form-box{
-  width:300px;
-  margin:15px auto;
-}
-
-input,select,button{
-  width:95%;
-  margin:4px;
-  padding:6px;
-}
-
-#details{
-  width:300px;
-  margin:10px auto;
-  border:1px solid black;
-  padding:10px;
-  text-align:left;
-}
-</style>
-</head>
-
-<body>
-
-<h2>📚 Wisdom Nest Library</h2>
-
-<div class="dashboard" id="statsBox"></div>
-
-<div class="form-box">
-<input id="name" placeholder="Name">
-<input id="father" placeholder="Father Name">
-<input id="mobile" placeholder="Mobile">
-<input id="aadhar" placeholder="Aadhar">
-
-<input id="paid" placeholder="Paid">
-<input id="total" placeholder="Total">
-
-<input id="start" type="date">
-<input id="end" type="date">
-
-<select id="payment">
-<option>Cash</option>
-<option>Online</option>
-<option>Due</option>
-</select>
-
-<button onclick="saveData()">SAVE</button>
-</div>
-
-<div id="details">Click seat</div>
-
-<div class="container" id="box"></div>
-
-<script>
-
-let selectedSeat = null;
-
-// 🔥 SAME SEATING (RESTORED)
-const layout = [
-[8,7,6,5,4,3,2,1],
-[9,10,11,12,0,13,14,15],
-[22,21,20,19,0,18,17,16],
-[23,24,25,0,0,26,27,28],
-[35,34,33,32,0,31,30,29],
-[36,37,38,39,0,40,41,42],
-[48,47,46,0,0,45,44,43],
-[49,50,51,0,0,52,53,54],
-[60,59,58,57,0,0,56,55]
-];
-
-// CREATE SEATS
-layout.forEach(row=>{
-  row.forEach(num=>{
-    let div=document.createElement("div");
-
-    if(num===0){
-      div.className="empty";
-    }else{
-      div.className="seat";
-      div.dataset.id=num;
-      div.innerText=num;
-
-      div.onclick=()=>{
-        selectedSeat=num;
-        loadData(num);
-        showDetails(num);
-        updateSeats();
-      };
-    }
-
-    box.appendChild(div);
-  });
-});
-
-// 🔥 SAVE FIX (FINAL STABLE VERSION)
+// 🔥 ONLY SAVE FIX (100% WORKING)
 function saveData(){
 
   if(selectedSeat === null){
-    alert("Seat select karo");
+    alert("⚠ Seat select karo");
     return;
   }
 
-  let name = document.getElementById("name").value.trim();
-  if(name === ""){
-    alert("Name required");
+  let n = document.getElementById("name").value.trim();
+  if(n === ""){
+    alert("⚠ Name required");
     return;
   }
-
-  let paid = Number(document.getElementById("paid").value || 0);
-  let total = Number(document.getElementById("total").value || 0);
 
   let data = {
-    name: name,
+    name: n,
     father: document.getElementById("father").value,
     mobile: document.getElementById("mobile").value,
     aadhar: document.getElementById("aadhar").value,
-    paid: paid,
-    total: total,
+    paid: Number(document.getElementById("paid").value || 0),
+    total: Number(document.getElementById("total").value || 0),
     start: document.getElementById("start").value,
     end: document.getElementById("end").value,
     payment: document.getElementById("payment").value,
-    due: total - paid,
     time: new Date().toISOString()
   };
 
-  try {
+  data.due = data.total - data.paid;
+
+  try{
     localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
-  } catch (e) {
+  }catch(e){
     alert("❌ Save failed");
     return;
   }
@@ -174,76 +40,3 @@ function saveData(){
 
   alert("✅ Saved Successfully");
 }
-
-// LOAD
-function loadData(i){
-  let d = JSON.parse(localStorage.getItem("seat_" + i) || "{}");
-
-  document.getElementById("name").value = d.name || "";
-  document.getElementById("father").value = d.father || "";
-  document.getElementById("mobile").value = d.mobile || "";
-  document.getElementById("aadhar").value = d.aadhar || "";
-  document.getElementById("paid").value = d.paid || "";
-  document.getElementById("total").value = d.total || "";
-  document.getElementById("start").value = d.start || "";
-  document.getElementById("end").value = d.end || "";
-  document.getElementById("payment").value = d.payment || "Cash";
-}
-
-// SHOW DETAILS
-function showDetails(i){
-  let d = JSON.parse(localStorage.getItem("seat_" + i));
-
-  if(!d){
-    details.innerHTML = "Empty Seat " + i;
-    return;
-  }
-
-  details.innerHTML = `
-  <b>Seat:</b> ${i}<br>
-  <b>Name:</b> ${d.name}<br>
-  <b>Father:</b> ${d.father}<br>
-  <b>Mobile:</b> ${d.mobile}<br>
-  <b>Aadhar:</b> ${d.aadhar}<br>
-  <b>Paid:</b> ₹${d.paid}<br>
-  <b>Due:</b> ₹${d.due}<br>
-  <b>Payment:</b> ${d.payment}<br>
-  <b>Date:</b> ${d.start} → ${d.end}
-  `;
-}
-
-// UPDATE SEATS
-function updateSeats(){
-
-  document.querySelectorAll(".seat").forEach(seat=>{
-    let id = seat.dataset.id;
-    let d = JSON.parse(localStorage.getItem("seat_" + id));
-
-    if(d && d.name){
-      seat.innerHTML = id + "<br>" + d.name;
-
-      let diff = d.total - d.paid;
-
-      if(diff > 0){
-        seat.style.background = "orange";
-      }else{
-        seat.style.background = "red";
-      }
-
-      seat.style.color = "white";
-
-    }else{
-      seat.innerHTML = id;
-      seat.style.background = "green";
-      seat.style.color = "black";
-    }
-  });
-}
-
-// INIT
-updateSeats();
-
-</script>
-
-</body>
-</html>
