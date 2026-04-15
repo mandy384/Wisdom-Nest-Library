@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Library PRO Advanced</title>
+<title>Ultra Pro Library System</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -10,7 +10,7 @@
 body{
 font-family:Arial;
 text-align:center;
-background:#f5f5f5;
+background:#f2f2f2;
 }
 
 h2{margin:10px;}
@@ -28,6 +28,7 @@ display:grid;
 grid-template-columns:repeat(8,90px);
 gap:6px;
 justify-content:center;
+margin-top:10px;
 }
 
 .seat{
@@ -72,7 +73,7 @@ cursor:pointer;
 
 <body>
 
-<h2>📚 Library Advanced PRO</h2>
+<h2>📚 ULTRA PRO LIBRARY SYSTEM (ONLINE)</h2>
 
 <div id="stats"></div>
 
@@ -80,7 +81,8 @@ cursor:pointer;
 
 <!-- FORM -->
 <div id="form">
-<h3>Seat Entry</h3>
+<h3>Add / Edit Student</h3>
+
 <input id="name" placeholder="Name">
 <input id="mobile" placeholder="Mobile">
 <input id="fee" placeholder="Total Fee">
@@ -89,16 +91,17 @@ cursor:pointer;
 <button onclick="saveData()">Save</button>
 </div>
 
-<!-- DETAILS -->
+<!-- PANEL -->
 <div id="panel">
 <pre id="info"></pre>
+
 <button onclick="deleteData()">Delete</button>
 <button onclick="closePanel()">Close</button>
 </div>
 
 <script>
 
-// 🔥 FIREBASE CONFIG
+// ================= FIREBASE =================
 const firebaseConfig = {
   apiKey: "AIzaSyCW-Tm3omcmCbcfbutyC56PuMRa8KEyb8s",
   authDomain: "wisdom-nest-library-daff9.firebaseapp.com",
@@ -112,11 +115,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let data={};
-let currentSeat=null;
+// ================= DATA =================
+let data = {};
+let currentSeat = null;
 
-// layout
-const layout=[
+// ================= LAYOUT =================
+const layout = [
 [1,2,3,4,5,6,7,8],
 [9,10,11,12,0,13,14,15],
 [16,17,18,19,0,20,21,22],
@@ -127,23 +131,25 @@ const layout=[
 [51,52,53,54,0,55,56,57]
 ];
 
-// realtime
+// ================= REAL TIME LOAD =================
 db.ref("seats").on("value", snap=>{
 data = snap.val() || {};
 draw();
 });
 
-// DRAW
+// ================= DRAW =================
 function draw(){
 let seats=document.getElementById("seats");
 let stats=document.getElementById("stats");
 
 seats.innerHTML="";
 
-let occ=0,total=0,due=0;
+let occupied=0;
+let totalPaid=0;
+let totalDue=0;
 
-layout.forEach(r=>{
-r.forEach(i=>{
+layout.forEach(row=>{
+row.forEach(i=>{
 let d=document.createElement("div");
 
 if(i===0){
@@ -155,14 +161,14 @@ if(data[i]){
 let s=data[i];
 d.innerHTML=i+"<br>"+s.name;
 
-let dAmt = Number(s.fee)-Number(s.paid||0);
+let due = Number(s.fee||0)-Number(s.paid||0);
 
-if(dAmt>0) d.classList.add("due");
+if(due>0) d.classList.add("due");
 else d.classList.add("full");
 
-occ++;
-total+=Number(s.paid||0);
-due+=dAmt;
+occupied++;
+totalPaid += Number(s.paid||0);
+totalDue += due;
 }else{
 d.innerText="Seat "+i;
 }
@@ -183,13 +189,15 @@ seats.appendChild(d);
 });
 
 stats.innerHTML=
-"Occupied: "+occ+
-" | Paid: ₹"+total+
-" | Due: ₹"+due;
+"Occupied: "+occupied+
+" | Empty: "+(60-occupied)+
+" | Paid: ₹"+totalPaid+
+" | Due: ₹"+totalDue;
 }
 
-// SAVE
+// ================= SAVE =================
 function saveData(){
+
 let obj={
 name:name.value,
 mobile:mobile.value,
@@ -202,10 +210,10 @@ db.ref("seats/"+currentSeat).set(obj);
 form.style.display="none";
 }
 
-// SHOW
+// ================= SHOW =================
 function showPanel(i){
 let s=data[i];
-let dueAmt = s.fee - s.paid;
+let due = Number(s.fee||0)-Number(s.paid||0);
 
 document.getElementById("info").innerText=
 "Seat: "+i+
@@ -213,18 +221,19 @@ document.getElementById("info").innerText=
 "\nMobile: "+s.mobile+
 "\nFee: "+s.fee+
 "\nPaid: "+s.paid+
-"\nDue: "+dueAmt;
+"\nDue: "+due;
 
 panel.style.display="block";
+form.style.display="none";
 }
 
-// DELETE
+// ================= DELETE =================
 function deleteData(){
 db.ref("seats/"+currentSeat).remove();
 panel.style.display="none";
 }
 
-// CLOSE
+// ================= CLOSE =================
 function closePanel(){
 panel.style.display="none";
 }
