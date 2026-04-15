@@ -2,10 +2,19 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Wisdom Nest Library</title>
+<title>Wisdom Nest Library Pro</title>
 
 <style>
 body { font-family: Arial; text-align: center; }
+
+.dashboard{
+  background:black;
+  color:white;
+  padding:10px;
+  margin:10px;
+  border-radius:10px;
+  font-size:14px;
+}
 
 .container {
   display: grid;
@@ -24,34 +33,37 @@ body { font-family: Arial; text-align: center; }
   border: 1px solid black;
   cursor: pointer;
   background: green;
+  color: black;
 }
 
 .empty { visibility: hidden; }
 
-.form-box {
-  margin: 15px auto;
-  width: 300px;
+.form-box{
+  margin:15px auto;
+  width:300px;
 }
 
-input, button {
-  width: 95%;
-  margin: 4px;
-  padding: 6px;
+input,select,button{
+  width:95%;
+  margin:4px;
+  padding:6px;
 }
 
-#details {
-  width: 300px;
-  margin: 10px auto;
-  border: 1px solid black;
-  padding: 10px;
-  text-align: left;
+#details{
+  width:300px;
+  margin:10px auto;
+  border:1px solid black;
+  padding:10px;
+  text-align:left;
 }
 </style>
 </head>
 
 <body>
 
-<h2>📚 Wisdom Nest Library</h2>
+<h2>📚 Wisdom Nest Library Pro</h2>
+
+<div class="dashboard" id="statsBox"></div>
 
 <div class="form-box">
 <input id="name" placeholder="Name">
@@ -65,6 +77,12 @@ input, button {
 <input id="start" type="date">
 <input id="end" type="date">
 
+<select id="payment">
+<option>Cash</option>
+<option>Online</option>
+<option>Due</option>
+</select>
+
 <button onclick="saveData()">Save</button>
 </div>
 
@@ -76,7 +94,7 @@ input, button {
 
 let selectedSeat=null;
 
-// 🔥 SAME ORIGINAL SEATING
+// 🔥 SAME SEATING
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -112,7 +130,7 @@ layout.forEach(row=>{
   });
 });
 
-// 🔥 SAVE FIX (NAME NOT SAVING FIXED)
+// SAVE
 function saveData(){
   if(!selectedSeat){
     alert("Seat select karo");
@@ -120,25 +138,26 @@ function saveData(){
   }
 
   let data={
-    name: document.getElementById("name").value.trim(),
-    father: document.getElementById("father").value,
-    mobile: document.getElementById("mobile").value,
-    aadhar: document.getElementById("aadhar").value,
-    paid: Number(document.getElementById("paid").value||0),
-    total: Number(document.getElementById("total").value||0),
-    start: document.getElementById("start").value,
-    end: document.getElementById("end").value,
-    due: Number(document.getElementById("total").value||0) - Number(document.getElementById("paid").value||0)
+    name:name.value.trim(),
+    father:father.value,
+    mobile:mobile.value,
+    aadhar:aadhar.value,
+    paid:Number(paid.value||0),
+    total:Number(total.value||0),
+    start:start.value,
+    end:end.value,
+    payment:payment.value,
+    due:Number(total.value||0)-Number(paid.value||0)
   };
 
-  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
+  localStorage.setItem("seat_"+selectedSeat,JSON.stringify(data));
 
   loadData(selectedSeat);
   showDetails(selectedSeat);
   updateSeats();
 }
 
-// LOAD FORM
+// LOAD
 function loadData(i){
   let d=JSON.parse(localStorage.getItem("seat_"+i));
 
@@ -151,15 +170,11 @@ function loadData(i){
     total.value=d.total||"";
     start.value=d.start||"";
     end.value=d.end||"";
+    payment.value=d.payment||"Cash";
   }else{
-    name.value="";
-    father.value="";
-    mobile.value="";
-    aadhar.value="";
-    paid.value="";
-    total.value="";
-    start.value="";
-    end.value="";
+    name.value="";father.value="";mobile.value="";
+    aadhar.value="";paid.value="";total.value="";
+    start.value="";end.value="";
   }
 }
 
@@ -180,11 +195,12 @@ function showDetails(i){
   <b>Aadhar:</b> ${d.aadhar}<br>
   <b>Paid:</b> ₹${d.paid}<br>
   <b>Due:</b> ₹${d.due}<br>
+  <b>Payment:</b> ${d.payment}<br>
   <b>Date:</b> ${d.start} → ${d.end}
   `;
 }
 
-// 🔥 COLOR + NAME FIX
+// UPDATE SEATS + COLORS
 function updateSeats(){
 
   let today=new Date().toISOString().split("T")[0];
@@ -200,23 +216,64 @@ function updateSeats(){
       let due=d.total-d.paid;
 
       if(d.end && d.end<today){
-        seat.style.background="skyblue"; // date expired
+        seat.style.background="skyblue";
       }
-      else if(due>0){
-        seat.style.background="orange"; // due
+      else if(d.payment==="Due" || due>0){
+        seat.style.background="orange";
+      }
+      else if(d.payment==="Online"){
+        seat.style.background="red";
       }
       else{
-        seat.style.background="red"; // booked
+        seat.style.background="red";
       }
 
       seat.style.color="white";
 
     }else{
       seat.innerHTML=id;
-      seat.style.background="green"; // empty
+      seat.style.background="green";
       seat.style.color="black";
     }
   });
+
+  updateStats();
+}
+
+// DASHBOARD STATS
+function updateStats(){
+
+  let used=0,empty=0;
+  let paid=0,due=0;
+  let cash=0,online=0;
+
+  for(let i=1;i<=64;i++){
+    let d=JSON.parse(localStorage.getItem("seat_"+i));
+
+    if(d && d.name){
+      used++;
+
+      paid+=Number(d.paid||0);
+      due+=Number(d.total||0)-Number(d.paid||0);
+
+      if(d.payment==="Cash") cash+=Number(d.paid||0);
+      if(d.payment==="Online") online+=Number(d.paid||0);
+    }else{
+      empty++;
+    }
+  }
+
+  statsBox.innerHTML=`
+  📊 Total Seats: 64<br>
+  🟢 Occupied: ${used}<br>
+  ⚪ Empty: ${empty}<br><br>
+
+  💰 Paid: ₹${paid}<br>
+  ❌ Due: ₹${due}<br><br>
+
+  💵 Cash: ₹${cash}<br>
+  📱 Online: ₹${online}
+  `;
 }
 
 // INIT
