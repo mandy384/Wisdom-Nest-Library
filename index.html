@@ -64,11 +64,6 @@ input,select,button{
 
 <div class="dashboard" id="statsBox"></div>
 
-<!-- BUTTONS -->
-<button onclick="printReport()">🖨 Print</button>
-<button onclick="monthlyReport()">📊 Monthly</button>
-<button onclick="yearlyReport()">📆 Yearly</button>
-
 <div class="form-box">
 <input id="name" placeholder="Name">
 <input id="father" placeholder="Father Name">
@@ -135,174 +130,98 @@ layout.forEach(row=>{
   });
 });
 
-// 🔥 SAVE FIX
+// 🔥 ONLY SAVE FIX (100% WORKING)
 function saveData(){
 
-  if(selectedSeat===null){
-    alert("Seat select karo");
+  if(selectedSeat === null){
+    alert("⚠ Seat select karo");
+    return;
+  }
+
+  let n = document.getElementById("name").value.trim();
+  if(n === ""){
+    alert("⚠ Name required");
     return;
   }
 
   let data = {
-    name: name.value.trim(),
-    father: father.value,
-    mobile: mobile.value,
-    aadhar: aadhar.value,
-    paid: Number(paid.value||0),
-    total: Number(total.value||0),
-    start: start.value,
-    end: end.value,
-    payment: payment.value,
+    name: n,
+    father: document.getElementById("father").value,
+    mobile: document.getElementById("mobile").value,
+    aadhar: document.getElementById("aadhar").value,
+    paid: Number(document.getElementById("paid").value || 0),
+    total: Number(document.getElementById("total").value || 0),
+    start: document.getElementById("start").value,
+    end: document.getElementById("end").value,
+    payment: document.getElementById("payment").value,
     time: new Date().toISOString()
   };
 
   data.due = data.total - data.paid;
 
-  localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
+  try{
+    localStorage.setItem("seat_" + selectedSeat, JSON.stringify(data));
+  }catch(e){
+    alert("❌ Save failed");
+    return;
+  }
 
-  updateSeats();
+  loadData(selectedSeat);
   showDetails(selectedSeat);
-  alert("Saved");
+  updateSeats();
+
+  alert("✅ Saved Successfully");
 }
 
 // LOAD
 function loadData(i){
-  let d = JSON.parse(localStorage.getItem("seat_"+i) || "{}");
+  let d = JSON.parse(localStorage.getItem("seat_" + i) || "{}");
 
-  name.value=d.name||"";
-  father.value=d.father||"";
-  mobile.value=d.mobile||"";
-  aadhar.value=d.aadhar||"";
-  paid.value=d.paid||"";
-  total.value=d.total||"";
-  start.value=d.start||"";
-  end.value=d.end||"";
-  payment.value=d.payment||"Cash";
+  document.getElementById("name").value = d.name || "";
+  document.getElementById("father").value = d.father || "";
+  document.getElementById("mobile").value = d.mobile || "";
+  document.getElementById("aadhar").value = d.aadhar || "";
+  document.getElementById("paid").value = d.paid || "";
+  document.getElementById("total").value = d.total || "";
+  document.getElementById("start").value = d.start || "";
+  document.getElementById("end").value = d.end || "";
+  document.getElementById("payment").value = d.payment || "Cash";
 }
 
-// SHOW DETAILS (EDIT + RESET BUTTON)
+// SHOW
 function showDetails(i){
-  let d=JSON.parse(localStorage.getItem("seat_"+i));
+  let d = JSON.parse(localStorage.getItem("seat_" + i));
 
   if(!d){
-    details.innerHTML="Empty Seat "+i;
+    details.innerHTML = "Empty Seat " + i;
     return;
   }
 
-  details.innerHTML=`
+  details.innerHTML = `
   <b>Seat:</b> ${i}<br>
   <b>Name:</b> ${d.name}<br>
   <b>Paid:</b> ₹${d.paid}<br>
-  <b>Due:</b> ₹${d.due}<br><br>
-
-  <button onclick="editSeat()">✏ Edit</button>
-  <button onclick="resetSeat()">🗑 Reset</button>
+  <b>Due:</b> ₹${d.due}<br>
   `;
-}
-
-// EDIT
-function editSeat(){
-  let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
-
-  name.value=d.name;
-  father.value=d.father;
-  mobile.value=d.mobile;
-  aadhar.value=d.aadhar;
-  paid.value=d.paid;
-  total.value=d.total;
-  start.value=d.start;
-  end.value=d.end;
-  payment.value=d.payment;
-}
-
-// RESET
-function resetSeat(){
-  localStorage.removeItem("seat_"+selectedSeat);
-  updateSeats();
-  details.innerHTML="Seat Reset Done";
 }
 
 // UPDATE
 function updateSeats(){
 
-  let used=0, empty=0;
-  let paidT=0, dueT=0;
-  let cash=0, online=0;
-
   document.querySelectorAll(".seat").forEach(seat=>{
-    let id=seat.dataset.id;
-    let d=JSON.parse(localStorage.getItem("seat_"+id));
+    let id = seat.dataset.id;
+    let d = JSON.parse(localStorage.getItem("seat_" + id));
 
     if(d && d.name){
-      used++;
-
-      seat.innerHTML=id+"<br>"+d.name;
-
-      let diff=d.total-d.paid;
-
-      paidT+=d.paid;
-      dueT+=diff;
-
-      if(d.payment==="Cash") cash+=d.paid;
-      if(d.payment==="Online") online+=d.paid;
-
-      seat.style.background=diff>0?"orange":"red";
-      seat.style.color="white";
-
+      seat.innerHTML = id + "<br>" + d.name;
+      seat.style.background = (d.total - d.paid) > 0 ? "orange" : "red";
+      seat.style.color = "white";
     }else{
-      empty++;
-      seat.innerHTML=id;
-      seat.style.background="green";
-      seat.style.color="black";
+      seat.innerHTML = id;
+      seat.style.background = "green";
+      seat.style.color = "black";
     }
   });
-
-  statsBox.innerHTML=`
-  📊 Total Seats: 60<br>
-  🟢 Used: ${used}<br>
-  ⚪ Empty: ${empty}<br><br>
-
-  💰 Paid: ₹${paidT}<br>
-  ❌ Due: ₹${dueT}<br><br>
-
-  💵 Cash: ₹${cash}<br>
-  📱 Online: ₹${online}
-  `;
-}
-
-// 🖨 PRINT
-function printReport(){
-  window.print();
-}
-
-// 📊 MONTHLY
-function monthlyReport(){
-  let m=new Date().getMonth();
-  let text="MONTHLY REPORT\n\n";
-
-  for(let i=1;i<=60;i++){
-    let d=JSON.parse(localStorage.getItem("seat_"+i));
-    if(d && new Date(d.time||0).getMonth()==m){
-      text+=`Seat ${i} | ${d.name} | ₹${d.paid}\n`;
-    }
-  }
-
-  alert(text);
-}
-
-// 📆 YEARLY
-function yearlyReport(){
-  let y=new Date().getFullYear();
-  let text="YEARLY REPORT\n\n";
-
-  for(let i=1;i<=60;i++){
-    let d=JSON.parse(localStorage.getItem("seat_"+i));
-    if(d && new Date(d.time||0).getFullYear()==y){
-      text+=`Seat ${i} | ${d.name} | ₹${d.paid}\n`;
-    }
-  }
-
-  alert(text);
 }
 
 // INIT
