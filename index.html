@@ -96,7 +96,7 @@ button { margin: 5px; padding: 8px; }
 <pre id="showData"></pre>
 <button onclick="editData()">Edit</button>
 <button onclick="deleteData()">Reset</button>
-<button onclick="sendMsg()">WhatsApp</button>
+<button onclick="sendMsg()">📩 SMS Reminder</button>
 <button onclick="downloadReceipt()">🧾 Receipt</button>
 </div>
 
@@ -105,7 +105,6 @@ let seatsDiv = document.getElementById("seats");
 let savedSeats = JSON.parse(localStorage.getItem("seats")) || {};
 let currentSeat = null;
 
-// 🔥 SAME 60 SEAT FORMAT
 const layout = [
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -192,11 +191,21 @@ function saveData(){
   renderSeats();
 }
 
-// बाकी सब SAME (unchanged)
+// ✅ SMS FUNCTION
+function sendMsg(){
+  let d = savedSeats[currentSeat];
+
+  let msg = `Hello ${d.name},
+Your library fee due is ₹${d.due}.
+Please pay soon.`;
+
+  window.location.href = `sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
+}
+
+// बाकी SAME
 function showDetails(i){
 let d=savedSeats[i];
-showData.innerText=
-`Seat: ${i}
+showData.innerText=`Seat: ${i}
 Name: ${d.name}
 Father: ${d.father}
 Mobile: ${d.mobile}
@@ -235,12 +244,6 @@ details.style.display="none";
 renderSeats();
 }
 
-function sendMsg(){
-let d=savedSeats[currentSeat];
-let msg=`Hello ${d.name}, Due ₹${d.due}`;
-window.open("https://wa.me/91"+d.mobile+"?text="+encodeURIComponent(msg));
-}
-
 function updateDueList(){
 dueList.innerHTML="";
 let today=new Date().toISOString().split("T")[0];
@@ -256,7 +259,7 @@ dueList.appendChild(div);
 }
 }
 
-// PDF functions SAME
+// PDF SAME
 function downloadPDF(){
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF(),y=10;
