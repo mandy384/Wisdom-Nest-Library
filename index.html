@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Library System</title>
+<title>Library Final Working</title>
 
 <style>
 body{font-family:Arial;text-align:center;}
@@ -86,7 +86,7 @@ input,select,button{
 
 let selectedSeat=null;
 
-// 60 SEATS SAME
+// 60 SEAT LAYOUT SAME
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -123,7 +123,7 @@ box.appendChild(d);
 });
 });
 
-// 🔥 SAVE FIX
+// 🔥 SAVE FIXED
 function saveData(){
 
 if(!selectedSeat){
@@ -151,7 +151,7 @@ loadData(selectedSeat);
 showDetails(selectedSeat);
 updateSeats();
 
-alert("Saved");
+alert("Saved Successfully");
 }
 
 // LOAD
@@ -179,16 +179,17 @@ return;
 }
 
 details.innerHTML=`
-<b>Name:</b>${d.name}<br>
-<b>Father:</b>${d.father}<br>
-<b>Aadhar:</b>${d.aadhar}<br>
-<b>Mobile:</b>${d.mobile}<br><br>
+<b>Name:</b> ${d.name}<br>
+<b>Father:</b> ${d.father}<br>
+<b>Aadhar:</b> ${d.aadhar}<br>
+<b>Mobile:</b> ${d.mobile}<br><br>
 
-<b>From:</b>${d.start}<br>
-<b>To:</b>${d.end}<br><br>
+<b>From:</b> ${d.start}<br>
+<b>To:</b> ${d.end}<br><br>
 
-<b>Paid:</b>₹${d.paid}<br>
-<b>Due:</b>₹${d.due}<br><br>
+<b>Paid:</b> ₹${d.paid}<br>
+<b>Total:</b> ₹${d.total}<br>
+<b>Due:</b> ₹${d.due}<br><br>
 
 <button onclick="editSeat()">Edit</button>
 <button onclick="resetSeat()">Reset</button>
@@ -228,10 +229,13 @@ updateSeats();
 showDetails(selectedSeat);
 }
 
-// 🔥 COLOR FIX FINAL
+// 🔥 COLOR FIX WORKING
 function updateSeats(){
 
 let used=0,empty=0,paidT=0,dueT=0;
+
+let today = new Date();
+today.setHours(0,0,0,0);
 
 document.querySelectorAll(".seat").forEach(s=>{
 let id=s.dataset.id;
@@ -240,27 +244,29 @@ let d=JSON.parse(localStorage.getItem("seat_"+id));
 if(d && d.name){
 used++;
 
-let due = Number(d.total||0) - Number(d.paid||0);
-paidT += Number(d.paid||0);
+let paid = Number(d.paid||0);
+let total = Number(d.total||0);
+let due = total - paid;
+
+paidT += paid;
 dueT += due;
 
 s.innerHTML = id+"<br>"+d.name;
 
-let today = new Date().toISOString().split("T")[0];
+let endDate = d.end ? new Date(d.end) : null;
+if(endDate) endDate.setHours(0,0,0,0);
 
-// SKY = DATE EXPIRED
-if(d.end && d.end < today){
-s.style.background = "skyblue";
+// SKY BLUE = DATE EXPIRED
+if(endDate && endDate < today){
+s.style.background="skyblue";
 }
-
 // ORANGE = DUE
 else if(due > 0){
-s.style.background = "orange";
+s.style.background="orange";
 }
-
-// RED = FULL PAID
+// RED = PAID COMPLETE
 else{
-s.style.background = "red";
+s.style.background="red";
 }
 
 s.style.color="white";
