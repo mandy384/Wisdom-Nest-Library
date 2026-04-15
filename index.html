@@ -2,10 +2,20 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Wisdom Nest</title>
+<title>Wisdom Nest Library Pro</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body { font-family: Arial; text-align: center; }
+
+.dashboard {
+  background: black;
+  color: white;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
+}
 
 .container {
   display: grid;
@@ -25,6 +35,10 @@ body { font-family: Arial; text-align: center; }
 
 .empty { visibility: hidden; }
 .active { border: 3px solid blue; }
+
+.complete { background: red !important; color: white; }
+.due { background: orange !important; }
+.expired { background: skyblue !important; }
 
 .form-box {
   border: 1px solid #ccc;
@@ -57,7 +71,13 @@ input, select, button {
 
 <body>
 
-<h2>Wisdom Nest</h2>
+<h2>📚 Wisdom Nest Library Pro</h2>
+
+<div class="dashboard">
+  <p id="stats"></p>
+</div>
+
+<div id="dueList"></div>
 
 <div class="form-box">
 <input id="name" placeholder="Name">
@@ -87,9 +107,10 @@ input, select, button {
 <div class="container" id="box"></div>
 
 <script>
-let selectedSeat=null;
 
-const layout=[
+let selectedSeat = null;
+
+const layout = [
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
 [22,21,20,19,0,18,17,16],
@@ -101,21 +122,23 @@ const layout=[
 [60,59,58,57,0,0,56,55]
 ];
 
-// create seats
+// create seats (SAME LAYOUT)
 layout.forEach(row=>{
   row.forEach(num=>{
     let div=document.createElement("div");
 
     if(num===0){
       div.className="empty";
-    }else{
+    } else {
       div.className="seat";
       div.dataset.seat=num;
 
       div.onclick=function(){
         selectedSeat=num;
 
-        document.querySelectorAll('.seat').forEach(s=>s.classList.remove("active"));
+        document.querySelectorAll('.seat')
+        .forEach(s=>s.classList.remove("active"));
+
         this.classList.add("active");
 
         loadForm();
@@ -127,7 +150,7 @@ layout.forEach(row=>{
   });
 });
 
-// load form data
+// LOAD FORM
 function loadForm(){
   let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
 
@@ -141,7 +164,7 @@ function loadForm(){
     start.value=d.start||"";
     end.value=d.end||"";
     payment.value=d.payment||"";
-  }else{
+  } else {
     resetForm();
   }
 }
@@ -153,28 +176,24 @@ function saveData(){
     return;
   }
 
-  if(!name.value.trim()){
-    alert("Name required");
-    return;
-  }
-
-  let data={
-    name:name.value.trim(),
-    father:father.value||"",
-    mobile:mobile.value||"",
-    aadhar:aadhar.value||"",
-    paid:Number(paid.value||0),
-    total:Number(total.value||0),
-    start:start.value||"",
-    end:end.value||"",
-    payment:payment.value||""
+  let data = {
+    name: name.value,
+    father: father.value,
+    mobile: mobile.value,
+    aadhar: aadhar.value,
+    paid: Number(paid.value||0),
+    total: Number(total.value||0),
+    start: start.value,
+    end: end.value,
+    payment: payment.value,
+    due: Number(total.value||0) - Number(paid.value||0)
   };
 
   localStorage.setItem("seat_"+selectedSeat, JSON.stringify(data));
 
   loadSeats();
   showDetails();
-  alert("✅ Saved");
+  updateStats();
 }
 
 // SHOW DETAILS
@@ -182,11 +201,9 @@ function showDetails(){
   let d=JSON.parse(localStorage.getItem("seat_"+selectedSeat));
 
   if(!d){
-    details.innerHTML="<b>Seat "+selectedSeat+"</b><br>Empty";
+    details.innerHTML="Empty Seat";
     return;
   }
-
-  let due=d.total-d.paid;
 
   details.innerHTML=`
   <b>Seat:</b> ${selectedSeat}<br>
@@ -194,9 +211,10 @@ function showDetails(){
   <b>Father:</b> ${d.father}<br>
   <b>Mobile:</b> ${d.mobile}<br>
   <b>Aadhar:</b> ${d.aadhar}<br>
-  <b>Paid:</b> ₹${d.paid} | <b>Due:</b> ₹${due}<br>
+  <b>Paid:</b> ₹${d.paid}<br>
+  <b>Due:</b> ₹${d.due}<br>
   <b>Payment:</b> ${d.payment}<br>
-  <b>Date:</b> ${d.start} → ${d.end}<br><br>
+  <b>Date:</b> ${d.start} → ${d.end}<br>
 
   <button onclick="deleteData()">Reset</button>
   `;
@@ -206,6 +224,7 @@ function showDetails(){
 function deleteData(){
   localStorage.removeItem("seat_"+selectedSeat);
   loadSeats();
+  updateStats();
   details.innerHTML="Deleted";
 }
 
@@ -215,16 +234,39 @@ function loadSeats(){
     let num=s.dataset.seat;
     let d=JSON.parse(localStorage.getItem("seat_"+num));
 
+    let today=new Date().toISOString().split("T")[0];
+
     if(d && d.name){
       s.innerHTML=num+"<br>"+d.name;
-      s.style.background="red";
-      s.style.color="white";
-    }else{
+
+      s.classList.remove("due","expired","complete");
+
+      if(d.end && d.end < today) s.classList.add("expired");
+      else if(d.due>0) s.classList.add("due");
+      else s.classList.add("complete");
+    } else {
       s.innerHTML=num;
-      s.style.background="lightgreen";
-      s.style.color="black";
+      s.classList.remove("due","expired","complete");
     }
   });
+}
+
+// STATS
+function updateStats(){
+  let totalSeats=64;
+  let used=0, paid=0, due=0;
+
+  for(let i=1;i<=64;i++){
+    let d=JSON.parse(localStorage.getItem("seat_"+i));
+    if(d){
+      used++;
+      paid+=d.paid||0;
+      due+=d.due||0;
+    }
+  }
+
+  stats.innerText=
+  `Seats: ${totalSeats} | Used: ${used} | Empty: ${totalSeats-used} | Paid: ₹${paid} | Due: ₹${due}`;
 }
 
 // RESET FORM
@@ -234,7 +276,11 @@ function resetForm(){
 }
 
 // INIT
-window.onload=loadSeats;
+window.onload=()=>{
+  loadSeats();
+  updateStats();
+};
+
 </script>
 
 </body>
