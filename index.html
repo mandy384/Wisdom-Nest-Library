@@ -2,10 +2,10 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Wisdom Nest Library</title>
+<title>Library System</title>
 
 <style>
-body{font-family:Arial;text-align:center;}
+body{text-align:center;font-family:Arial;}
 
 .dashboard{
   background:black;
@@ -13,7 +13,6 @@ body{font-family:Arial;text-align:center;}
   padding:10px;
   margin:10px;
   border-radius:10px;
-  font-size:14px;
 }
 
 .container{
@@ -37,13 +36,8 @@ body{font-family:Arial;text-align:center;}
 
 .empty{visibility:hidden;}
 
-.form-box{
-  width:300px;
-  margin:auto;
-}
-
 input,select,button{
-  width:95%;
+  width:90%;
   margin:4px;
   padding:6px;
 }
@@ -60,16 +54,16 @@ input,select,button{
 
 <body>
 
-<h2>📚 Wisdom Nest Library</h2>
+<h2>📚 Library System</h2>
 
 <div class="dashboard" id="statsBox"></div>
 
-<button onclick="monthlyReport()">📊 Monthly</button>
-<button onclick="yearlyReport()">📆 Yearly</button>
+<button onclick="monthlyReport()">Monthly Report</button>
+<button onclick="yearlyReport()">Yearly Report</button>
 
-<div class="form-box">
+<div>
 <input id="name" placeholder="Name">
-<input id="father" placeholder="Father Name">
+<input id="father" placeholder="Father">
 <input id="mobile" placeholder="Mobile">
 <input id="aadhar" placeholder="Aadhar">
 
@@ -88,7 +82,7 @@ input,select,button{
 <button onclick="saveData()">SAVE</button>
 </div>
 
-<div id="details">Click seat</div>
+<div id="details">Click Seat</div>
 
 <div class="container" id="box"></div>
 
@@ -96,7 +90,7 @@ input,select,button{
 
 let selectedSeat=null;
 
-// 60 SEAT LAYOUT SAME
+// 60 seats same
 const layout=[
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -109,7 +103,7 @@ const layout=[
 [60,59,58,57,0,0,56,55]
 ];
 
-// CREATE SEATS
+// CREATE
 layout.forEach(r=>{
 r.forEach(n=>{
 let d=document.createElement("div");
@@ -128,7 +122,6 @@ showDetails(n);
 updateSeats();
 };
 }
-
 box.appendChild(d);
 });
 });
@@ -141,20 +134,17 @@ alert("Select seat");
 return;
 }
 
-let p=Number(paid.value||0);
-let t=Number(total.value||0);
-
 let data={
 name:name.value.trim(),
 father:father.value,
 mobile:mobile.value,
 aadhar:aadhar.value,
-paid:p,
-total:t,
+paid:Number(paid.value||0),
+total:Number(total.value||0),
 start:start.value,
 end:end.value,
 payment:payment.value,
-due:t-p,
+due:Number(total.value||0)-Number(paid.value||0),
 time:new Date().toISOString()
 };
 
@@ -164,7 +154,7 @@ loadData(selectedSeat);
 showDetails(selectedSeat);
 updateSeats();
 
-alert("Saved Successfully");
+alert("Saved");
 }
 
 // LOAD
@@ -182,7 +172,7 @@ end.value=d.end||"";
 payment.value=d.payment||"Cash";
 }
 
-// FULL DETAILS
+// DETAILS
 function showDetails(i){
 let d=JSON.parse(localStorage.getItem("seat_"+i));
 
@@ -192,22 +182,14 @@ return;
 }
 
 details.innerHTML=`
-<b>Seat:</b>${i}<br>
 <b>Name:</b>${d.name}<br>
 <b>Father:</b>${d.father}<br>
 <b>Mobile:</b>${d.mobile}<br>
-<b>Aadhar:</b>${d.aadhar}<br><br>
-
 <b>Paid:</b>₹${d.paid}<br>
-<b>Total:</b>₹${d.total}<br>
 <b>Due:</b>₹${d.due}<br><br>
 
-<b>From:</b>${d.start}<br>
-<b>To:</b>${d.end}<br>
-<b>Payment:</b>${d.payment}<br><br>
-
-<button onclick="editSeat()">✏ Edit</button>
-<button onclick="resetSeat()">🗑 Reset</button>
+<button onclick="editSeat()">Edit</button>
+<button onclick="resetSeat()">Reset</button>
 `;
 }
 
@@ -275,54 +257,39 @@ s.style.color="black";
 }
 });
 
-statsBox.innerHTML=`
-Total Seats:60 | Used:${used} | Empty:${empty}<br>
+statsBox.innerHTML=
+`Total:60 | Used:${used} | Empty:${empty}<br>
 Paid:₹${paidT} | Due:₹${dueT}<br>
-Cash:₹${cash} | Online:₹${online}
-`;
+Cash:₹${cash} | Online:₹${online}`;
 }
 
-// 📊 MONTHLY
+// MONTHLY
 function monthlyReport(){
-
 let m=new Date().getMonth();
-let y=new Date().getFullYear();
-
 let txt="MONTHLY REPORT\n\n";
-let paid=0,due=0;
 
 for(let i=1;i<=60;i++){
 let d=JSON.parse(localStorage.getItem("seat_"+i));
-
-if(d&&new Date(d.time).getMonth()===m && new Date(d.time).getFullYear()===y){
+if(d&&new Date(d.time).getMonth()===m){
 txt+=`Seat ${i} | ${d.name} | ₹${d.paid}\n`;
-paid+=Number(d.paid||0);
-due+=Number(d.total-d.paid||0);
 }
 }
 
-txt+=`\nTotal Paid: ₹${paid}\nTotal Due: ₹${due}`;
 alert(txt);
 }
 
-// 📆 YEARLY
+// YEARLY
 function yearlyReport(){
-
 let y=new Date().getFullYear();
 let txt="YEARLY REPORT\n\n";
-let paid=0,due=0;
 
 for(let i=1;i<=60;i++){
 let d=JSON.parse(localStorage.getItem("seat_"+i));
-
 if(d&&new Date(d.time).getFullYear()===y){
 txt+=`Seat ${i} | ${d.name} | ₹${d.paid}\n`;
-paid+=Number(d.paid||0);
-due+=Number(d.total-d.paid||0);
 }
 }
 
-txt+=`\nTotal Paid: ₹${paid}\nTotal Due: ₹${due}`;
 alert(txt);
 }
 
