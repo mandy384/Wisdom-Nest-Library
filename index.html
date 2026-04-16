@@ -1,60 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Wisdom Nest Library</title>
+<title>Wisdom-Nest-Library PRO</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body { font-family: Arial; text-align:center; }
+body { font-family: Arial; text-align: center; }
 
-#seats{
-  display:grid;
-  grid-template-columns:repeat(8,100px);
-  gap:8px;
-  justify-content:center;
+.dashboard {
+  background: black;
+  color: white;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
 }
 
-.seat{
-  height:90px;
-  background:green;
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:8px;
-  cursor:pointer;
-  font-size:12px;
+#seats {
+  display: grid;
+  grid-template-columns: repeat(8, 100px);
+  gap: 8px;
+  justify-content: center;
+}
+
+.seat {
+  height: 90px;
+  background: green;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 11px;
 }
 
 .seat div{
   text-align:center;
-  line-height:1.3;
 }
 
-.empty{visibility:hidden;}
-.due{background:orange;}
-.full{background:red;}
+.complete { background: red; }
+.due { background: orange; }
+.expired { background: skyblue; }
 
-#form,#details{
-  display:none;
-  background:#eee;
-  padding:10px;
-  margin:10px;
-  border-radius:10px;
+#form, #details {
+  display: none;
+  background: #eee;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
 }
 
-input,select{
-  width:90%;
-  margin:5px;
-  padding:6px;
-}
+input, select { margin: 5px; padding: 5px; width: 90%; }
+button { margin: 5px; padding: 8px; }
+
+.empty { visibility: hidden; }
 </style>
 </head>
 
 <body>
 
-<h2>📚 Wisdom Nest Library (FINAL UI)</h2>
+<h2>📚 Wisdom-Nest-Library (PRO)</h2>
 
-<div id="stats"></div>
+<div class="dashboard">
+<p id="stats"></p>
+</div>
+
+<button onclick="downloadPDF()">📄 Full Report</button>
+
+<h3>⚠️ Due / Expired</h3>
+<div id="dueList"></div>
+
 <div id="seats"></div>
 
 <!-- FORM -->
@@ -80,19 +96,20 @@ input,select{
 
 <!-- DETAILS -->
 <div id="details">
-<pre id="info"></pre>
-<button onclick="deleteData()">Delete</button>
-<button onclick="closeDetails()">Close</button>
+<pre id="showData"></pre>
+<button onclick="editData()">Edit</button>
+<button onclick="deleteData()">Reset</button>
+<button onclick="sendMsg()">📩 SMS</button>
+<button onclick="downloadReceipt()">🧾 Receipt</button>
 </div>
 
 <script>
 
 const API = "https://69e0a2c429c070e6597bc6bf.mockapi.io/wisdomnestlibrary";
 
-let data = {};
+let savedSeats = {};
 let currentSeat = null;
 
-// ✅ ORIGINAL LAYOUT
 const layout = [
 [8,7,6,5,4,3,2,1],
 [9,10,11,12,0,13,14,15],
@@ -110,88 +127,32 @@ async function loadData(){
   let res = await fetch(API);
   let arr = await res.json();
 
-  data = {};
+  savedSeats = {};
   arr.forEach(d=>{
-    data[d.seat] = d;
+    savedSeats[d.seat] = d;
   });
 
-  draw();
-}
-
-// DRAW
-function draw(){
-  let seats=document.getElementById("seats");
-  seats.innerHTML="";
-
-  let occ=0,total=0,due=0;
-
-  layout.forEach(row=>{
-    row.forEach(i=>{
-      let d=document.createElement("div");
-
-      if(i===0){
-        d.className="empty";
-      }else{
-        d.className="seat";
-
-        if(data[i]){
-          let s=data[i];
-
-          // ✅ PROPER STRUCTURE (FIXED)
-          d.innerHTML = `
-            <div>
-              <b>${i}</b><br>
-              ${s.name || ""}
-            </div>
-          `;
-
-          let dAmt = (s.totalFee||0)-(s.paid||0);
-
-          if(dAmt>0) d.classList.add("due");
-          else d.classList.add("full");
-
-          occ++;
-          total+=Number(s.paid||0);
-          due+=dAmt;
-
-        }else{
-          d.innerHTML = `<div><b>Seat ${i}</b></div>`;
-        }
-
-        d.onclick=()=>{
-          currentSeat=i;
-
-          if(data[i]){
-            showDetails(i);
-          }else{
-            document.getElementById("form").style.display="block";
-          }
-        };
-      }
-
-      seats.appendChild(d);
-    });
-  });
-
-  document.getElementById("stats").innerText =
-  "Occupied: "+occ+" | Paid: ₹"+total+" | Due: ₹"+due;
+  renderSeats();
 }
 
 // SAVE
 async function saveData(){
+  let totalFee=Number(totalFee.value||0);
+  let paid=Number(paid.value||0);
 
-  let obj = {
+  let obj={
     seat: currentSeat,
-    name: name.value,
-    father: father.value,
-    mobile: mobile.value,
-    adhar: adhar.value,
-    shift: shift.value,
-    from: from.value,
-    to: to.value,
-    payment: payment.value,
-    totalFee: Number(totalFee.value||0),
-    paid: Number(paid.value||0)
+    name:name.value,
+    father:father.value,
+    mobile:mobile.value,
+    adhar:adhar.value,
+    shift:shift.value,
+    from:from.value,
+    to:to.value,
+    payment:payment.value,
+    totalFee,
+    paid,
+    due: totalFee-paid
   };
 
   let res = await fetch(API);
@@ -212,29 +173,8 @@ async function saveData(){
     });
   }
 
-  document.getElementById("form").style.display="none";
+  form.style.display="none";
   loadData();
-}
-
-// DETAILS
-function showDetails(i){
-  let s=data[i];
-
-  document.getElementById("info").innerText=
-  "Seat: "+i+
-  "\nName: "+s.name+
-  "\nFather: "+s.father+
-  "\nMobile: "+s.mobile+
-  "\nAadhar: "+s.adhar+
-  "\nShift: "+s.shift+
-  "\nFrom: "+s.from+
-  "\nTo: "+s.to+
-  "\nPayment: "+s.payment+
-  "\nFee: "+s.totalFee+
-  "\nPaid: "+s.paid+
-  "\nDue: "+(s.totalFee - s.paid);
-
-  document.getElementById("details").style.display="block";
 }
 
 // DELETE
@@ -247,12 +187,153 @@ async function deleteData(){
     await fetch(API+"/"+item.id,{method:"DELETE"});
   }
 
-  document.getElementById("details").style.display="none";
+  details.style.display="none";
   loadData();
 }
 
-function closeDetails(){
-  document.getElementById("details").style.display="none";
+// RENDER
+function renderSeats(){
+  seats.innerHTML="";
+
+  let occupied=0,totalPaid=0,totalDue=0;
+  let today=new Date().toISOString().split("T")[0];
+
+  layout.forEach(row=>{
+    row.forEach(i=>{
+      let seat=document.createElement("div");
+
+      if(i===0){
+        seat.className="empty";
+      }else{
+        seat.className="seat";
+
+        if(savedSeats[i]){
+          let d=savedSeats[i];
+
+          // ✅ NAME FIXED
+          seat.innerHTML = `<div><b>${i}</b><br>${d.name}</div>`;
+
+          if(d.to && d.to<today) seat.classList.add("expired");
+          else if(d.due>0) seat.classList.add("due");
+          else seat.classList.add("complete");
+
+          occupied++;
+          totalPaid+=Number(d.paid||0);
+          totalDue+=Number(d.due||0);
+        }else{
+          seat.innerHTML = `<div><b>Seat ${i}</b></div>`;
+        }
+
+        seat.onclick=()=>{
+          currentSeat=i;
+          if(savedSeats[i]) showDetails(i);
+          else form.style.display="block";
+        };
+      }
+
+      seats.appendChild(seat);
+    });
+  });
+
+  stats.innerText=
+  "Seats: 60 | Occupied: "+occupied+
+  " | Paid: ₹"+totalPaid+
+  " | Due: ₹"+totalDue;
+
+  updateDueList();
+}
+
+// DETAILS
+function showDetails(i){
+let d=savedSeats[i];
+showData.innerText=`Seat: ${i}
+Name: ${d.name}
+Father: ${d.father}
+Mobile: ${d.mobile}
+Aadhar: ${d.adhar}
+Shift: ${d.shift}
+From: ${d.from}
+To: ${d.to}
+Payment: ${d.payment}
+Total: ₹${d.totalFee}
+Paid: ₹${d.paid}
+Due: ₹${d.due}`;
+details.style.display="block";
+form.style.display="none";
+}
+
+// EDIT
+function editData(){
+let d=savedSeats[currentSeat];
+name.value=d.name;
+father.value=d.father;
+mobile.value=d.mobile;
+adhar.value=d.adhar;
+shift.value=d.shift;
+from.value=d.from;
+to.value=d.to;
+payment.value=d.payment;
+totalFee.value=d.totalFee;
+paid.value=d.paid;
+form.style.display="block";
+details.style.display="none";
+}
+
+// SMS
+function sendMsg(){
+let d=savedSeats[currentSeat];
+
+let msg = `📚 Wisdom-Nest-Library
+
+प्रिय ${d.name},
+
+आपकी लाइब्रेरी फीस बकाया है।
+
+सीट: ${currentSeat}
+बाकी: ₹${d.due}
+
+कृपया भुगतान करें।`;
+
+window.location.href = `sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
+}
+
+// PDF
+function downloadPDF(){
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF(),y=10;
+
+for(let i in savedSeats){
+let d=savedSeats[i];
+doc.text(`Seat ${i} ${d.name} ₹${d.paid}`,10,y);
+y+=8;
+}
+doc.save("report.pdf");
+}
+
+function downloadReceipt(){
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF();
+let d=savedSeats[currentSeat];
+
+doc.text("Receipt",10,10);
+doc.text(d.name,10,20);
+doc.save("receipt.pdf");
+}
+
+// DUE LIST
+function updateDueList(){
+dueList.innerHTML="";
+let today=new Date().toISOString().split("T")[0];
+
+for(let i in savedSeats){
+let d=savedSeats[i];
+
+if((d.to && d.to<today)||d.due>0){
+let div=document.createElement("div");
+div.innerText="Seat "+i+" | "+d.name+" | ₹"+d.due;
+dueList.appendChild(div);
+}
+}
 }
 
 // START
