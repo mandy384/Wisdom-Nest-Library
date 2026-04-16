@@ -171,7 +171,7 @@ async function saveData(){
   loadData();
 }
 
-// RENDER (🔥 DASHBOARD ADDED)
+// RENDER
 function renderSeats(){
   seats.innerHTML="";
 
@@ -234,7 +234,6 @@ Online: ${online}`;
   updateDueList();
 }
 
-// बाकी same
 function showDetails(i){
 let d=savedSeats[i];
 showData.innerText=`Seat: ${i}
@@ -279,13 +278,47 @@ fetch(API+"/"+item.id,{method:"DELETE"}).then(loadData);
 details.style.display="none";
 }
 
+// 🔥 FINAL SMS FUNCTION
 function sendMsg(){
-let d=savedSeats[currentSeat];
-let msg=`Library Reminder
-${d.name}
-Seat:${currentSeat}
-Due ₹${d.due}`;
-window.location.href=`sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
+  let d = savedSeats[currentSeat];
+
+  let msg = `📚 Wisdom Nest Library
+
+Hello ${d.name},
+
+Seat No: ${currentSeat}
+Shift: ${d.shift}
+Time: ${d.from} to ${d.to}
+
+Payment Mode: ${d.payment}
+Total Fee: ₹${d.totalFee}
+Paid: ₹${d.paid}
+Due: ₹${d.due}
+
+⚠️ Kindly clear your pending fee as soon as possible.
+
+----------------------------
+
+📚 विजडम नेस्ट लाइब्रेरी
+
+नमस्ते ${d.name},
+
+सीट नंबर: ${currentSeat}
+शिफ्ट: ${d.shift}
+समय: ${d.from} से ${d.to}
+
+भुगतान प्रकार: ${d.payment}
+कुल फीस: ₹${d.totalFee}
+जमा राशि: ₹${d.paid}
+बकाया: ₹${d.due}
+
+⚠️ कृपया अपनी बकाया फीस जल्द जमा करें।
+
+----------------------------
+
+🙏 Thank You | धन्यवाद`;
+
+  window.location.href = `sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
 }
 
 function downloadPDF(){
