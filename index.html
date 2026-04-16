@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Wisdom-Nest-Library FINAL</title>
+<title>Wisdom-Nest-Library</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -35,8 +35,6 @@ body { font-family: Arial; text-align: center; }
   font-size: 11px;
 }
 
-.seat div { text-align:center; }
-
 .complete { background: red; }
 .due { background: orange; }
 .expired { background: skyblue; }
@@ -58,7 +56,7 @@ button { margin: 5px; padding: 8px; }
 
 <body>
 
-<h2>📚 Wisdom-Nest-Library (FINAL PRO)</h2>
+<h2>📚 Wisdom-Nest-Library</h2>
 
 <div class="dashboard">
 <p id="stats"></p>
@@ -97,7 +95,7 @@ button { margin: 5px; padding: 8px; }
 <pre id="showData"></pre>
 <button onclick="editData()">Edit</button>
 <button onclick="deleteData()">Reset</button>
-<button onclick="sendMsg()">📩 SMS</button>
+<button onclick="sendMsg()">📩 SMS Reminder</button>
 <button onclick="downloadReceipt()">🧾 Receipt</button>
 </div>
 
@@ -133,32 +131,30 @@ async function loadData(){
   renderSeats();
 }
 
-// 🔥 SAVE FIXED (NAME ISSUE SOLVED)
+// 🔥 SAVE (NAME FIXED ONLY)
 async function saveData(){
 
-  if(!currentSeat){
-    alert("Seat select karo ❌");
-    return;
-  }
+  let totalFeeVal = Number(totalFee.value || 0);
+  let paidVal = Number(paid.value || 0);
 
-  let obj = {
+  let obj={
     seat: currentSeat,
     name: document.getElementById("name").value, // ✅ FIX
-    father: document.getElementById("father").value,
-    mobile: document.getElementById("mobile").value,
-    adhar: document.getElementById("adhar").value,
-    shift: document.getElementById("shift").value,
-    from: document.getElementById("from").value,
-    to: document.getElementById("to").value,
-    payment: document.getElementById("payment").value,
-    totalFee: Number(document.getElementById("totalFee").value || 0),
-    paid: Number(document.getElementById("paid").value || 0),
-    due: Number(document.getElementById("totalFee").value || 0) - Number(document.getElementById("paid").value || 0)
+    father: father.value,
+    mobile: mobile.value,
+    adhar: adhar.value,
+    shift: shift.value,
+    from: from.value,
+    to: to.value,
+    payment: payment.value,
+    totalFee: totalFeeVal,
+    paid: paidVal,
+    due: totalFeeVal - paidVal
   };
 
   let res = await fetch(API);
   let arr = await res.json();
-  let existing = arr.find(d => Number(d.seat) === Number(currentSeat));
+  let existing = arr.find(d => d.seat == currentSeat);
 
   if(existing){
     await fetch(API+"/"+existing.id,{
@@ -175,29 +171,124 @@ async function saveData(){
   }
 
   form.style.display="none";
+  renderSeats();
   loadData();
 }
 
 // बाकी सब SAME
 function renderSeats(){
   seats.innerHTML="";
+  let today=new Date().toISOString().split("T")[0];
+
   layout.forEach(row=>{
     row.forEach(i=>{
       let seat=document.createElement("div");
-      if(i===0){ seat.className="empty"; }
-      else{
+
+      if(i===0){
+        seat.className="empty";
+      }else{
         seat.className="seat";
+
         if(savedSeats[i]){
-          seat.innerHTML=`<div><b>${i}</b><br>${savedSeats[i].name}</div>`;
+          let d=savedSeats[i];
+          seat.innerHTML = `<b>${i}</b><br>${d.name}`;
+
+          if(d.to && d.to<today) seat.classList.add("expired");
+          else if(d.due>0) seat.classList.add("due");
+          else seat.classList.add("complete");
+
         }else{
-          seat.innerHTML=`<div><b>Seat ${i}</b></div>`;
+          seat.innerText="Seat "+i;
         }
-        seat.onclick=()=>{currentSeat=i;form.style.display="block";}
+
+        seat.onclick=()=>{
+          currentSeat=i;
+          if(savedSeats[i]) showDetails(i);
+          else form.style.display="block";
+        };
       }
+
       seats.appendChild(seat);
     });
   });
 }
+
+function showDetails(i){
+let d=savedSeats[i];
+showData.innerText=`Seat: ${i}
+Name: ${d.name}
+Father: ${d.father}
+Mobile: ${d.mobile}
+Aadhar: ${d.adhar}
+Shift: ${d.shift}
+From: ${d.from}
+To: ${d.to}
+Payment: ${d.payment}
+Total: ₹${d.totalFee}
+Paid: ₹${d.paid}
+Due: ₹${d.due}`;
+details.style.display="block";
+form.style.display="none";
+}
+
+function editData(){
+let d=savedSeats[currentSeat];
+document.getElementById("name").value=d.name; // ✅ FIX
+father.value=d.father;
+mobile.value=d.mobile;
+adhar.value=d.adhar;
+shift.value=d.shift;
+from.value=d.from;
+to.value=d.to;
+payment.value=d.payment;
+totalFee.value=d.totalFee;
+paid.value=d.paid;
+form.style.display="block";
+details.style.display="none";
+}
+
+function deleteData(){
+fetch(API).then(r=>r.json()).then(arr=>{
+let item=arr.find(d=>d.seat==currentSeat);
+if(item){
+fetch(API+"/"+item.id,{method:"DELETE"}).then(loadData);
+}
+});
+details.style.display="none";
+}
+
+function sendMsg(){
+let d=savedSeats[currentSeat];
+let msg=`Library Reminder
+${d.name}
+Seat:${currentSeat}
+Due ₹${d.due}`;
+window.location.href=`sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
+}
+
+function downloadPDF(){
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF(),y=10;
+
+for(let i in savedSeats){
+let d=savedSeats[i];
+doc.text(`Seat ${i} ${d.name} ₹${d.paid}`,10,y);
+y+=8;
+}
+doc.save("report.pdf");
+}
+
+function downloadReceipt(){
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF();
+let d=savedSeats[currentSeat];
+
+doc.text("Receipt",10,10);
+doc.text(d.name,10,20);
+doc.save("receipt.pdf");
+}
+
+function updateDueList(){}
 
 loadData();
 
