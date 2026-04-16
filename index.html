@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Wisdom-Nest-Library PRO</title>
+<title>Wisdom-Nest-Library FINAL</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -35,9 +35,7 @@ body { font-family: Arial; text-align: center; }
   font-size: 11px;
 }
 
-.seat div{
-  text-align:center;
-}
+.seat div { text-align:center; }
 
 .complete { background: red; }
 .due { background: orange; }
@@ -60,7 +58,7 @@ button { margin: 5px; padding: 8px; }
 
 <body>
 
-<h2>📚 Wisdom-Nest-Library (PRO)</h2>
+<h2>📚 Wisdom-Nest-Library (FINAL PRO)</h2>
 
 <div class="dashboard">
 <p id="stats"></p>
@@ -135,10 +133,16 @@ async function loadData(){
   renderSeats();
 }
 
-// SAVE
+// 🔥 FINAL SAVE FIXED
 async function saveData(){
-  let totalFee=Number(totalFee.value||0);
-  let paid=Number(paid.value||0);
+
+  if(!currentSeat){
+    alert("Seat select karo ❌");
+    return;
+  }
+
+  let totalFeeVal = Number(totalFee.value || 0);
+  let paidVal = Number(paid.value || 0);
 
   let obj={
     seat: currentSeat,
@@ -150,31 +154,43 @@ async function saveData(){
     from:from.value,
     to:to.value,
     payment:payment.value,
-    totalFee,
-    paid,
-    due: totalFee-paid
+    totalFee: totalFeeVal,
+    paid: paidVal,
+    due: totalFeeVal - paidVal
   };
 
-  let res = await fetch(API);
-  let arr = await res.json();
-  let existing = arr.find(d => d.seat == currentSeat);
+  try{
 
-  if(existing){
-    await fetch(API+"/"+existing.id,{
-      method:"PUT",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify(obj)
-    });
-  }else{
-    await fetch(API,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify(obj)
-    });
+    let res = await fetch(API);
+    let arr = await res.json();
+
+    let existing = arr.find(d => Number(d.seat) === Number(currentSeat));
+
+    if(existing){
+      await fetch(API+"/"+existing.id,{
+        method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(obj)
+      });
+    }else{
+      await fetch(API,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(obj)
+      });
+    }
+
+    alert("Saved Successfully ✅");
+
+    form.style.display="none";
+    details.style.display="none";
+
+    loadData();
+
+  }catch(err){
+    console.log(err);
+    alert("Save Error ❌");
   }
-
-  form.style.display="none";
-  loadData();
 }
 
 // DELETE
@@ -209,8 +225,6 @@ function renderSeats(){
 
         if(savedSeats[i]){
           let d=savedSeats[i];
-
-          // ✅ NAME FIXED
           seat.innerHTML = `<div><b>${i}</b><br>${d.name}</div>`;
 
           if(d.to && d.to<today) seat.classList.add("expired");
@@ -283,18 +297,12 @@ details.style.display="none";
 function sendMsg(){
 let d=savedSeats[currentSeat];
 
-let msg = `📚 Wisdom-Nest-Library
+let msg=`📚 Wisdom-Nest-Library
+${d.name}
+Seat:${currentSeat}
+Due: ₹${d.due}`;
 
-प्रिय ${d.name},
-
-आपकी लाइब्रेरी फीस बकाया है।
-
-सीट: ${currentSeat}
-बाकी: ₹${d.due}
-
-कृपया भुगतान करें।`;
-
-window.location.href = `sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
+window.location.href=`sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
 }
 
 // PDF
