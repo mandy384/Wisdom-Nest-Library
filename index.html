@@ -96,7 +96,6 @@ button { margin: 5px; padding: 8px; }
 <pre id="showData"></pre>
 <button onclick="editData()">Edit</button>
 <button onclick="deleteData()">Reset</button>
-<button onclick="sendMsg()">📩 SMS</button>
 </div>
 
 <script>
@@ -131,7 +130,7 @@ async function loadData(){
   renderSeats();
 }
 
-// SAVE (FIXED)
+// SAVE
 async function saveData(){
 
   let obj={
@@ -175,9 +174,6 @@ async function saveData(){
 function renderSeats(){
   seats.innerHTML="";
 
-  let occupied=0,totalPaid=0,totalDue=0;
-  let totalSeats=60;
-
   let today=new Date().toISOString().split("T")[0];
 
   layout.forEach(row=>{
@@ -206,10 +202,6 @@ function renderSeats(){
             seat.classList.add("complete");
           }
 
-          occupied++;
-          totalPaid+=Number(d.paid||0);
-          totalDue+=Number(d.due||0);
-
         }else{
           seat.innerText="Seat "+i;
         }
@@ -217,22 +209,13 @@ function renderSeats(){
         seat.onclick=()=>{
           currentSeat=i;
           if(savedSeats[i]) showDetails(i);
-          else form.style.display="block";
+          else document.getElementById("form").style.display="block";
         };
       }
 
       seats.appendChild(seat);
     });
   });
-
-  let empty = totalSeats - occupied;
-
-  stats.innerText=
-  `Total Seats: ${totalSeats}
-Occupied: ${occupied}
-Empty: ${empty}
-Paid: ₹${totalPaid}
-Due: ₹${totalDue}`;
 
   updateDueList();
 }
@@ -253,6 +236,26 @@ details.style.display="block";
 form.style.display="none";
 }
 
+// 🔥 EDIT FIX
+function editData(){
+  let d = savedSeats[currentSeat];
+  if(!d) return;
+
+  document.getElementById("form").style.display = "block";
+  document.getElementById("details").style.display = "none";
+
+  document.getElementById("name").value = d.name || "";
+  document.getElementById("father").value = d.father || "";
+  document.getElementById("mobile").value = d.mobile || "";
+  document.getElementById("adhar").value = d.adhar || "";
+  document.getElementById("shift").value = d.shift || "";
+  document.getElementById("from").value = d.from || "";
+  document.getElementById("to").value = d.to || "";
+  document.getElementById("payment").value = d.payment || "Cash";
+  document.getElementById("totalFee").value = d.totalFee || "";
+  document.getElementById("paid").value = d.paid || "";
+}
+
 // DELETE
 function deleteData(){
 fetch(API).then(r=>r.json()).then(arr=>{
@@ -262,19 +265,6 @@ fetch(API+"/"+item.id,{method:"DELETE"}).then(loadData);
 }
 });
 details.style.display="none";
-}
-
-// PDF
-function downloadPDF(){
-const { jsPDF } = window.jspdf;
-let doc=new jsPDF(),y=10;
-
-for(let i in savedSeats){
-let d=savedSeats[i];
-doc.text(`Seat ${i} ${d.name} ₹${d.paid}`,10,y);
-y+=8;
-}
-doc.save("report.pdf");
 }
 
 // DUE LIST
