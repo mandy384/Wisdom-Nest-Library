@@ -97,6 +97,7 @@ button { margin: 5px; padding: 8px; }
 <button onclick="editData()">Edit</button>
 <button onclick="deleteData()">Reset</button>
 <button onclick="sendMsg()">📩 SMS</button>
+<button onclick="downloadPDF()">🧾 PDF</button>
 </div>
 
 <script>
@@ -171,7 +172,7 @@ async function saveData(){
   loadData();
 }
 
-// 🔥 RENDER + STATS FIX
+// RENDER
 function renderSeats(){
   seats.innerHTML="";
 
@@ -192,7 +193,7 @@ function renderSeats(){
 
         if(savedSeats[i]){
           let d=savedSeats[i];
-          seat.innerHTML = `<b>${i}</b><br>${d.name || ""}`;
+          seat.innerHTML = `<b>${i}</b><br>${d.name}`;
 
           if(d.payment=="Cash") cash++;
           else online++;
@@ -221,7 +222,7 @@ function renderSeats(){
         seat.onclick=()=>{
           currentSeat=i;
           if(savedSeats[i]) showDetails(i);
-          else document.getElementById("form").style.display="block";
+          else form.style.display="block";
         };
       }
 
@@ -243,29 +244,44 @@ Online: ${online}`;
   updateDueList();
 }
 
-// बाकी same functions (details, edit, delete, sms)...
-
+// DETAILS FULL
 function showDetails(i){
 let d=savedSeats[i];
 showData.innerText=`Seat: ${i}
 Name: ${d.name}
+Father: ${d.father}
 Mobile: ${d.mobile}
+Aadhar: ${d.adhar}
+Shift: ${d.shift}
+From: ${d.from}
+To: ${d.to}
+Payment: ${d.payment}
+Total: ₹${d.totalFee}
+Paid: ₹${d.paid}
 Due: ₹${d.due}`;
 details.style.display="block";
 form.style.display="none";
 }
 
+// EDIT FULL
 function editData(){
 let d=savedSeats[currentSeat];
 document.getElementById("form").style.display="block";
 document.getElementById("details").style.display="none";
 
 document.getElementById("name").value=d.name||"";
+document.getElementById("father").value=d.father||"";
 document.getElementById("mobile").value=d.mobile||"";
+document.getElementById("adhar").value=d.adhar||"";
+document.getElementById("shift").value=d.shift||"";
+document.getElementById("from").value=d.from||"";
+document.getElementById("to").value=d.to||"";
+document.getElementById("payment").value=d.payment||"Cash";
 document.getElementById("totalFee").value=d.totalFee||"";
 document.getElementById("paid").value=d.paid||"";
 }
 
+// DELETE
 function deleteData(){
 fetch(API).then(r=>r.json()).then(arr=>{
 let item=arr.find(d=>d.seat==currentSeat);
@@ -276,12 +292,61 @@ fetch(API+"/"+item.id,{method:"DELETE"}).then(loadData);
 details.style.display="none";
 }
 
+// SMS FULL
 function sendMsg(){
-let d=savedSeats[currentSeat];
-let msg=`Hello ${d.name} Due ₹${d.due}`;
-window.location.href=`sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
+  let d = savedSeats[currentSeat];
+
+  let msg = `📚 Wisdom Nest Library
+
+Hello ${d.name},
+
+Seat No: ${currentSeat}
+Shift: ${d.shift}
+Time: ${d.from} to ${d.to}
+
+Payment Mode: ${d.payment}
+Total Fee: ₹${d.totalFee}
+Paid: ₹${d.paid}
+Due: ₹${d.due}
+
+⚠️ Kindly clear your pending fee.
+
+----------------------------
+
+📚 विजडम नेस्ट लाइब्रेरी
+
+नमस्ते ${d.name},
+
+सीट नंबर: ${currentSeat}
+शिफ्ट: ${d.shift}
+समय: ${d.from} से ${d.to}
+
+भुगतान प्रकार: ${d.payment}
+कुल फीस: ₹${d.totalFee}
+जमा राशि: ₹${d.paid}
+बकाया: ₹${d.due}
+
+⚠️ कृपया अपनी बकाया फीस जमा करें।
+
+🙏 धन्यवाद`;
+
+  window.location.href = `sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
 }
 
+// PDF
+function downloadPDF(){
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF(),y=10;
+
+for(let i in savedSeats){
+let d=savedSeats[i];
+doc.text(`Seat ${i} ${d.name} ₹${d.paid}`,10,y);
+y+=8;
+}
+doc.save("report.pdf");
+}
+
+// DUE LIST
 function updateDueList(){
 dueList.innerHTML="";
 for(let i in savedSeats){
@@ -294,7 +359,9 @@ dueList.appendChild(div);
 }
 }
 
+// AUTO REFRESH
 setInterval(loadData,30000);
+
 loadData();
 
 </script>
