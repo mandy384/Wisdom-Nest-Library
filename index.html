@@ -96,6 +96,7 @@ button { margin: 5px; padding: 8px; }
 <pre id="showData"></pre>
 <button onclick="editData()">Edit</button>
 <button onclick="deleteData()">Reset</button>
+<button onclick="sendMsg()">📩 SMS</button>
 </div>
 
 <script>
@@ -236,7 +237,7 @@ details.style.display="block";
 form.style.display="none";
 }
 
-// 🔥 EDIT FIX
+// EDIT
 function editData(){
   let d = savedSeats[currentSeat];
   if(!d) return;
@@ -265,6 +266,19 @@ fetch(API+"/"+item.id,{method:"DELETE"}).then(loadData);
 }
 });
 details.style.display="none";
+}
+
+// 🔥 SMS BACK
+function sendMsg(){
+  let d = savedSeats[currentSeat];
+
+  let msg = `Hello ${d.name}
+Seat: ${currentSeat}
+Total: ₹${d.totalFee}
+Paid: ₹${d.paid}
+Due: ₹${d.due}`;
+
+  window.location.href = `sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
 }
 
 // DUE LIST
