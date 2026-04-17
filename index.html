@@ -33,6 +33,7 @@ body { font-family: Arial; text-align: center; }
   border-radius: 8px;
   cursor: pointer;
   font-size: 11px;
+  text-align: center;
 }
 
 .complete { background: red; }
@@ -96,7 +97,6 @@ button { margin: 5px; padding: 8px; }
 <button onclick="editData()">Edit</button>
 <button onclick="deleteData()">Reset</button>
 <button onclick="sendMsg()">📩 SMS</button>
-<button onclick="downloadReceipt()">🧾 Receipt</button>
 </div>
 
 <script>
@@ -118,7 +118,7 @@ const layout = [
 [60,59,58,57,0,0,56,55]
 ];
 
-// LOAD DATA
+// LOAD
 async function loadData(){
   let res = await fetch(API);
   let arr = await res.json();
@@ -131,21 +131,22 @@ async function loadData(){
   renderSeats();
 }
 
-// SAVE DATA
+// SAVE (FIXED)
 async function saveData(){
+
   let obj={
     seat: currentSeat,
-    name: name.value,
-    father: father.value,
-    mobile: mobile.value,
-    adhar: adhar.value,
-    shift: shift.value,
-    from: from.value,
-    to: to.value,
-    payment: payment.value,
-    totalFee: Number(totalFee.value||0),
-    paid: Number(paid.value||0),
-    due: Number(totalFee.value||0) - Number(paid.value||0)
+    name: document.getElementById("name").value,
+    father: document.getElementById("father").value,
+    mobile: document.getElementById("mobile").value,
+    adhar: document.getElementById("adhar").value,
+    shift: document.getElementById("shift").value,
+    from: document.getElementById("from").value,
+    to: document.getElementById("to").value,
+    payment: document.getElementById("payment").value,
+    totalFee: Number(document.getElementById("totalFee").value||0),
+    paid: Number(document.getElementById("paid").value||0),
+    due: Number(document.getElementById("totalFee").value||0) - Number(document.getElementById("paid").value||0)
   };
 
   let res = await fetch(API);
@@ -170,12 +171,11 @@ async function saveData(){
   loadData();
 }
 
-// RENDER SEATS
+// RENDER
 function renderSeats(){
   seats.innerHTML="";
 
   let occupied=0,totalPaid=0,totalDue=0;
-  let cash=0,online=0;
   let totalSeats=60;
 
   let today=new Date().toISOString().split("T")[0];
@@ -191,22 +191,19 @@ function renderSeats(){
 
         if(savedSeats[i]){
           let d=savedSeats[i];
-          seat.innerHTML = `<b>${i}</b><br>${d.name}`;
-
-          if(d.payment=="Cash") cash++;
-          else online++;
+          seat.innerHTML = `<b>${i}</b><br>${d.name || ""}`;
 
           let isExpired = d.to && d.to < today;
 
           if(isExpired){
-            seat.classList.add("expired"); // SKY BLUE
-            d.due = d.totalFee - d.paid;   // AUTO DUE
+            seat.classList.add("expired");
+            d.due = d.totalFee - d.paid;
           }
           else if(d.due > 0){
-            seat.classList.add("due"); // ORANGE
+            seat.classList.add("due");
           }
           else{
-            seat.classList.add("complete"); // RED
+            seat.classList.add("complete");
           }
 
           occupied++;
@@ -235,9 +232,7 @@ function renderSeats(){
 Occupied: ${occupied}
 Empty: ${empty}
 Paid: ₹${totalPaid}
-Due: ₹${totalDue}
-Cash: ${cash}
-Online: ${online}`;
+Due: ₹${totalDue}`;
 
   updateDueList();
 }
@@ -247,12 +242,10 @@ function showDetails(i){
 let d=savedSeats[i];
 showData.innerText=`Seat: ${i}
 Name: ${d.name}
-Father: ${d.father}
 Mobile: ${d.mobile}
 Shift: ${d.shift}
 From: ${d.from}
 To: ${d.to}
-Payment: ${d.payment}
 Total: ₹${d.totalFee}
 Paid: ₹${d.paid}
 Due: ₹${d.due}`;
@@ -300,7 +293,6 @@ dueList.appendChild(div);
 // AUTO REFRESH
 setInterval(loadData,30000);
 
-// START
 loadData();
 
 </script>
