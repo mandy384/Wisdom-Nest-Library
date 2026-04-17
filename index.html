@@ -97,6 +97,7 @@ button { margin: 5px; padding: 8px; }
 <button onclick="editData()">Edit</button>
 <button onclick="deleteData()">Reset</button>
 <button onclick="sendMsg()">📩 SMS</button>
+<button onclick="downloadReceipt()">🧾 Receipt</button>
 </div>
 
 <script>
@@ -226,10 +227,12 @@ function showDetails(i){
 let d=savedSeats[i];
 showData.innerText=`Seat: ${i}
 Name: ${d.name}
+Father: ${d.father}
 Mobile: ${d.mobile}
 Shift: ${d.shift}
 From: ${d.from}
 To: ${d.to}
+Payment: ${d.payment}
 Total: ₹${d.totalFee}
 Paid: ₹${d.paid}
 Due: ₹${d.due}`;
@@ -268,17 +271,60 @@ fetch(API+"/"+item.id,{method:"DELETE"}).then(loadData);
 details.style.display="none";
 }
 
-// 🔥 SMS BACK
+// 🔥 FULL SMS
 function sendMsg(){
   let d = savedSeats[currentSeat];
 
-  let msg = `Hello ${d.name}
-Seat: ${currentSeat}
-Total: ₹${d.totalFee}
+  let msg = `📚 Wisdom Nest Library
+
+Hello ${d.name},
+
+Seat No: ${currentSeat}
+Shift: ${d.shift}
+Time: ${d.from} to ${d.to}
+
+Payment Mode: ${d.payment}
+Total Fee: ₹${d.totalFee}
 Paid: ₹${d.paid}
-Due: ₹${d.due}`;
+Due: ₹${d.due}
+
+⚠️ Kindly clear your pending fee as soon as possible.
+
+----------------------------
+
+📚 विजडम नेस्ट लाइब्रेरी
+
+नमस्ते ${d.name},
+
+सीट नंबर: ${currentSeat}
+शिफ्ट: ${d.shift}
+समय: ${d.from} से ${d.to}
+
+भुगतान प्रकार: ${d.payment}
+कुल फीस: ₹${d.totalFee}
+जमा राशि: ₹${d.paid}
+बकाया: ₹${d.due}
+
+⚠️ कृपया अपनी बकाया फीस जल्द जमा करें।
+
+----------------------------
+
+🙏 Thank You | धन्यवाद`;
 
   window.location.href = `sms:${d.mobile}?body=${encodeURIComponent(msg)}`;
+}
+
+// PDF
+function downloadPDF(){
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF(),y=10;
+
+for(let i in savedSeats){
+let d=savedSeats[i];
+doc.text(`Seat ${i} ${d.name} ₹${d.paid}`,10,y);
+y+=8;
+}
+doc.save("report.pdf");
 }
 
 // DUE LIST
